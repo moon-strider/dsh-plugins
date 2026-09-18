@@ -19,6 +19,16 @@ A dsh client plugin: it adds a "Subagents" tab to the right sidebar — a live m
 - An "Active" flag sits at the right of the header counters and filters **the tree only** down to running subagents, so idle ones drop out while the counters keep reporting the full picture (total, running, and the total token sum over every listed subagent).
 
 
+## Prefetching
+
+Opening a subagent chat for the first time costs a round trip: the client opens that session's history window (the tail page plus its projections and assistant stream) only when the session is staged. The plugin warms it ahead of time, so the first click is instant.
+
+The trigger is entering the **parent** chat: as soon as the current session is a main session (not a subagent), the plugin plans a prefetch of that tree's subagents and runs it sequentially, running subagents first and idle ones after, at most 12 sessions per tree (120 ms apart). While the user stays in the parent, subagents that start running later are added to the plan; entering a subagent chat prefetches nothing, and another tree keeps its own plan.
+
+A session is warmed through `ctx.sessions.binding(id).session.open()` — the same idempotent window opener the sessions service calls when a session is staged, so a later `open()` returns the already-installed window instead of fetching. The host side only *observes* the session (`observeSession`, projection mode `all`); it never resumes the agent, so prefetching starts nothing.
+
+Cost: the memory is negligible — each warmed session holds a bounded 50-message window plus its projections (tens to hundreds of KB), so a dozen subagents stay within a few megabytes. The non-memory cost is that every warmed session also keeps its live event stream and host-side observation open until it leaves the session list, which is why the plan is capped per tree and never runs for trees the user is not in.
+
 ## Architecture
 
 - `package.json` — the `dsh.client` declaration (web platform plus the provider package list) and `dsh.bundle.patch` (the package adds itself to the profile's layers).
@@ -45,6 +55,7 @@ After the first install, reload the GUI page once (new boot-graph rows are picke
 node tmp/smoke.mjs    # registration, definition, face, dictionaries
 node tmp/render.mjs   # tree, ordering, highlight, metrics, navigation
 node tmp/carry.mjs    # shared state inside a tree, no carry between trees
+node tmp/prefetch.mjs # parent-triggered warm-up, running first, per-tree cap
 ```
 
 `tmp/` is a scratch verification directory that never reaches git.

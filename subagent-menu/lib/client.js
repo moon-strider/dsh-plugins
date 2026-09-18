@@ -572,6 +572,8 @@ window.__ModuleLoader__.load({
 			});
 			return null;
 		}
+		const PREFETCH_LIMIT = 12;
+		const PREFETCH_GAP_MS = 120;
 		const treeWatches = new Set();
 		const openIn = new Set();
 		const inject = ["sessions", "slots", "locale", "sidebarRightTabs", "sidebarRight"];
@@ -693,9 +695,65 @@ window.__ModuleLoader__.load({
 				locale: NS
 			}, SubagentsTitle)), "subagent-menu: tab title");
 			let lastCurrent = sessions.list.getSnapshot().current;
+			let prefetchRoot;
+			let prefetchTimer;
+			let prefetchQueue = [];
+			const prefetched = new Set();
+			const prefetchedCount = new Map();
+			const prefetchOne = (id) => {
+				if (prefetched.has(id)) return;
+				prefetched.add(id);
+				let binding;
+				try {
+					binding = sessions.binding(id);
+				} catch (error) {
+					binding = undefined;
+				}
+				const target = binding?.session;
+				if (target === undefined || typeof target.open !== "function") return;
+				try {
+					target.open();
+				} catch (error) {}
+			};
+			const pumpPrefetch = () => {
+				prefetchTimer = undefined;
+				if (prefetchQueue.length === 0) return;
+				prefetchOne(prefetchQueue.shift());
+				if (prefetchQueue.length > 0) prefetchTimer = setTimeout(pumpPrefetch, PREFETCH_GAP_MS);
+			};
+			const planPrefetch = (rootId, includeIdle) => {
+				const state = sessions.list.getSnapshot();
+				if (rootId === undefined || state.byId[rootId] === undefined) return;
+				const used = prefetchedCount.get(rootId) ?? 0;
+				if (used >= PREFETCH_LIMIT) return;
+				const running = [];
+				const idle = [];
+				for (const summary of Object.values(state.byId)) {
+					if (summary.origin !== "subagent" || summary.parentId === undefined) continue;
+					if (!reachesRoot(state.byId, rootId, summary.parentId)) continue;
+					if (prefetched.has(summary.id)) continue;
+					if (summary.running === true) running.push(summary.id);
+					else idle.push(summary.id);
+				}
+				const candidates = includeIdle ? [...running, ...idle] : running;
+				const take = candidates.slice(0, PREFETCH_LIMIT - used);
+				if (take.length === 0) return;
+				prefetchedCount.set(rootId, used + take.length);
+				for (const id of take) if (!prefetchQueue.includes(id)) prefetchQueue.push(id);
+				if (prefetchTimer === undefined) prefetchTimer = setTimeout(pumpPrefetch, 0);
+			};
 			ctx.effect(() => {
 				const unsubscribe = sessions.list.subscribe(() => {
-					const current = sessions.list.getSnapshot().current;
+					const state = sessions.list.getSnapshot();
+					const current = state.current;
+					if (current !== undefined && state.byId[current] !== undefined && state.byId[current].origin !== "subagent") {
+						if (prefetchRoot !== current) {
+							prefetchRoot = current;
+							planPrefetch(current, true);
+						} else {
+							planPrefetch(current, false);
+						}
+					}
 					if (current === lastCurrent) return;
 					lastCurrent = current;
 					if (current === undefined) return;
@@ -703,9 +761,18 @@ window.__ModuleLoader__.load({
 				});
 				return () => {
 					if (followTimer !== undefined) clearTimeout(followTimer);
+					if (prefetchTimer !== undefined) clearTimeout(prefetchTimer);
 					unsubscribe();
 				};
-			}, "subagent-menu: tree carry");
+			}, "subagent-menu: tree carry and prefetch");
+			const bootState = sessions.list.getSnapshot();
+			if (bootState.current !== undefined && bootState.byId[bootState.current]?.origin !== "subagent") {
+				prefetchRoot = bootState.current;
+				prefetchTimer = setTimeout(() => {
+					prefetchTimer = undefined;
+					planPrefetch(prefetchRoot, true);
+				}, 1e3);
+			}
 		}
 		exports.apply = apply;
 		exports.inject = inject;
