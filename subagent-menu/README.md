@@ -35,6 +35,21 @@ Dropping an idle session closes its live stream and marks the session cold again
 
 Cost: warming holds a bounded window (50 messages plus projections) and one live event stream per warmed session. Keeping that to running subagents and to idle ones the user is looking at bounds both.
 
+## Observability
+
+The plugin leans on dsh internals, so a dsh update can quietly break it. Nothing fails silently: every contract it depends on is checked and reported.
+
+What is watched: the services it injects (slots, locale, sidebar tab registry, sessions), the declaration of the slots it registers into, the per-session tab opener used for carrying state, the session window opener and the release fields used for prefetching, the shape of the sessions snapshot (`byId`/`subagentsByParent`/`current`), the shape of a parent's subagent catalog, and the navigation verbs used by row clicks.
+
+How it reports:
+
+- **Browser console** — one line per distinct issue, prefixed `[dsh-plugin-subagent-menu]`, carrying the level, the scope, what exactly was expected and the hint that dsh internals changed and the plugin needs updating. A repeated failure is logged once; the repeat count lives in the UI.
+- **The tab itself** — a red banner at the top of the Subagents panel screams the issue count and the hint, with a details toggle listing every issue (level, scope, message, the concrete expectation and how many times it failed). The tab title carries a warning marker while anything is wrong.
+- **Levels** — `error` means the feature is dead (the tab cannot register, a click cannot navigate, the snapshot shape changed); `warn` means degraded with a fallback (state carrying or prefetch disabled, a warmed session that cannot be released, a session that could not be resolved).
+- An issue clears itself as soon as the contract reads healthy again, so the banner disappears after the plugin is fixed or the environment recovers.
+
+When the banner appears: open the browser console, read the prefixed lines, and update `dsh_plugins/subagent-menu` (or re-apply its patch) against the dsh version that is running.
+
 ## Architecture
 
 - `package.json` — the `dsh.client` declaration (web platform plus the provider package list) and `dsh.bundle.patch` (the package adds itself to the profile's layers).
@@ -62,6 +77,7 @@ node tmp/smoke.mjs    # registration, definition, face, dictionaries
 node tmp/render.mjs   # tree, ordering, highlight, metrics, navigation
 node tmp/carry.mjs    # shared state inside a tree, no carry between trees
 node tmp/prefetch.mjs # active always, idle only while watched, dropped after
+node tmp/diagnostics.mjs # silent when healthy, loud with scopes when broken
 ```
 
 `tmp/` is a scratch verification directory that never reaches git.
