@@ -1,0 +1,7 @@
+# The subagent-menu plugin's own patch layer: inserts the package as a Loader
+# entry so the client-modules node half scans its dsh.client declaration into
+# window.__DSH_BOOT__. The host half (lib/index.js) is a no-op plugin; all
+# behavior lives in the browser bundle.
+- insert:
+    - id: subagent-menu
+      name: 'dsh-plugin-subagent-menu'
