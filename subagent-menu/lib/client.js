@@ -434,7 +434,7 @@ window.__ModuleLoader__.load({
 				})
 			}, root.id);
 		}
-		function SubagentsBody({ sessionId, useSessions, openRow, openRoot, refreshAll, watchTree, unwatchTree, t }) {
+		function SubagentsBody({ sessionId, useSessions, openRow, openRoot, refreshAll, watchTree, unwatchTree, setFlag, t }) {
 			const [now, setNow] = (0, react.useState)(() => Date.now());
 			const [activeOnly, setActiveOnly] = (0, react.useState)(false);
 			const state = useSessions((value) => value);
@@ -447,6 +447,9 @@ window.__ModuleLoader__.load({
 					unwatchTree();
 				};
 			}, [watchTree, unwatchTree]);
+			(0, react.useEffect)(() => {
+				setFlag(activeOnly);
+			}, [activeOnly, setFlag]);
 			(0, react.useEffect)(() => {
 				if (tree.counts.running === 0) return undefined;
 				const timer = setInterval(() => {
@@ -626,6 +629,7 @@ window.__ModuleLoader__.load({
 				placeInto(id);
 				if (!openIn.has(id)) followTimer = setTimeout(followAttempt, 120);
 			};
+			const prefetchApi = {};
 			const resolveAddress = (state, row) => {
 				const entry = state.subagentsByParent[row.parentId]?.entries.find((candidate) => candidate.kind === "child" && candidate.id === row.id);
 				return entry === undefined ? undefined : {
@@ -662,10 +666,14 @@ window.__ModuleLoader__.load({
 				},
 				unwatchTree() {
 					openIn.delete(sessionId);
+					if (typeof prefetchApi.releaseIdle === "function") prefetchApi.releaseIdle(sessionId);
 					if (sessions.list.getSnapshot().current === sessionId) {
 						const root = rootOf(sessionId);
 						if (root !== undefined) treeWatches.delete(root);
 					}
+				},
+				setFlag(activeOnly) {
+					if (typeof prefetchApi.setFlag === "function") prefetchApi.setFlag(sessionId, activeOnly);
 				},
 				seedFollow() {
 					placeFollow(sessionId);
@@ -695,11 +703,12 @@ window.__ModuleLoader__.load({
 				locale: NS
 			}, SubagentsTitle)), "subagent-menu: tab title");
 			let lastCurrent = sessions.list.getSnapshot().current;
-			let prefetchRoot;
 			let prefetchTimer;
 			let prefetchQueue = [];
 			const prefetched = new Set();
 			const prefetchedCount = new Map();
+			const warmedIdle = new Map();
+			const flagOff = new Set();
 			const prefetchOne = (id) => {
 				if (prefetched.has(id)) return;
 				prefetched.add(id);
@@ -733,26 +742,70 @@ window.__ModuleLoader__.load({
 					if (!reachesRoot(state.byId, rootId, summary.parentId)) continue;
 					if (prefetched.has(summary.id)) continue;
 					if (summary.running === true) running.push(summary.id);
-					else idle.push(summary.id);
+					else if (includeIdle) idle.push(summary.id);
 				}
-				const candidates = includeIdle ? [...running, ...idle] : running;
-				const take = candidates.slice(0, PREFETCH_LIMIT - used);
+				const take = [...running, ...idle].slice(0, PREFETCH_LIMIT - used);
 				if (take.length === 0) return;
 				prefetchedCount.set(rootId, used + take.length);
-				for (const id of take) if (!prefetchQueue.includes(id)) prefetchQueue.push(id);
+				for (const id of take) {
+					if (!prefetchQueue.includes(id)) prefetchQueue.push(id);
+					if (running.includes(id)) continue;
+					let set = warmedIdle.get(rootId);
+					if (set === undefined) {
+						set = new Set();
+						warmedIdle.set(rootId, set);
+					}
+					set.add(id);
+				}
 				if (prefetchTimer === undefined) prefetchTimer = setTimeout(pumpPrefetch, 0);
 			};
+			const releaseWarm = (id) => {
+				if (sessions.list.getSnapshot().current === id) return false;
+				let binding;
+				try {
+					binding = sessions.binding(id);
+				} catch (error) {
+					return false;
+				}
+				const target = binding?.session;
+				if (target === undefined) return false;
+				const events = target.events;
+				target.openState = "cold";
+				target.openGeneration = (target.openGeneration ?? 0) + 1;
+				target.events = undefined;
+				if (events !== undefined && typeof events.dispose === "function") {
+					try {
+						const pending = events.dispose();
+						if (pending !== undefined && typeof pending.catch === "function") pending.catch(() => {});
+					} catch (error) {}
+				}
+				return true;
+			};
+			const dropIdle = (rootId) => {
+				const set = warmedIdle.get(rootId);
+				if (set === undefined) return;
+				const state = sessions.list.getSnapshot();
+				for (const id of [...set]) {
+					set.delete(id);
+					const summary = state.byId[id];
+					if (summary !== undefined && summary.running === true) continue;
+					if (!releaseWarm(id)) continue;
+					prefetched.delete(id);
+					prefetchedCount.set(rootId, Math.max(0, (prefetchedCount.get(rootId) ?? 1) - 1));
+				}
+				if (set.size === 0) warmedIdle.delete(rootId);
+			};
+			const treeHasFlagOff = (rootId) => {
+				for (const id of flagOff) if (rootOf(id) === rootId) return true;
+				return false;
+			};
+			const idleWarmAllowed = (sessionId) => flagOff.has(sessionId);
 			ctx.effect(() => {
 				const unsubscribe = sessions.list.subscribe(() => {
 					const state = sessions.list.getSnapshot();
 					const current = state.current;
 					if (current !== undefined && state.byId[current] !== undefined && state.byId[current].origin !== "subagent") {
-						if (prefetchRoot !== current) {
-							prefetchRoot = current;
-							planPrefetch(current, true);
-						} else {
-							planPrefetch(current, false);
-						}
+						planPrefetch(current, idleWarmAllowed(current));
 					}
 					if (current === lastCurrent) return;
 					lastCurrent = current;
@@ -767,12 +820,29 @@ window.__ModuleLoader__.load({
 			}, "subagent-menu: tree carry and prefetch");
 			const bootState = sessions.list.getSnapshot();
 			if (bootState.current !== undefined && bootState.byId[bootState.current]?.origin !== "subagent") {
-				prefetchRoot = bootState.current;
+				const bootRoot = bootState.current;
 				prefetchTimer = setTimeout(() => {
 					prefetchTimer = undefined;
-					planPrefetch(prefetchRoot, true);
+					planPrefetch(bootRoot, false);
 				}, 1e3);
 			}
+			prefetchApi.setFlag = (sessionId, activeOnly) => {
+				if (activeOnly) {
+					flagOff.delete(sessionId);
+					const root = rootOf(sessionId);
+					if (root !== undefined && !treeHasFlagOff(root)) dropIdle(root);
+					return;
+				}
+				flagOff.add(sessionId);
+				const root = rootOf(sessionId);
+				if (root !== undefined) planPrefetch(root, true);
+			};
+			prefetchApi.releaseIdle = (sessionId) => {
+				flagOff.delete(sessionId);
+				const root = rootOf(sessionId);
+				if (root === undefined || treeHasFlagOff(root)) return;
+				dropIdle(root);
+			};
 		}
 		exports.apply = apply;
 		exports.inject = inject;
