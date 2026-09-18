@@ -16,6 +16,8 @@ A dsh client plugin: it adds a "Subagents" tab to the right sidebar — a live m
 - "The sidebar is open and showing Subagents" is a **state shared within a tree** (main → its subagents): navigating inside the tree (via the tab's rows or dsh's own lineage menu) carries the tab and the expanded panel into the target session, so the sidebar does not close. **The state is not carried between different trees**: every tree keeps its own state, and a tree where the subagents sidebar was never opened stays untouched (the panel behaves natively).
 - A tree's state turns on while the tab is visible (sidebar expanded and the Subagents tab active) and turns off when the user, in the same session, collapses the panel, closes the tab or switches to another tab — after that the tree no longer carries the state.
 - The tab title shows how many subagents of the current chat are running.
+- An "Active" flag sits at the right of the header counters and filters **the tree only** down to running subagents, so idle ones drop out while the counters keep reporting the full picture (total, running, and the total token sum over every listed subagent).
+
 
 ## Architecture
 
