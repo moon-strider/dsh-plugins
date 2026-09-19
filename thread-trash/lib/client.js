@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
 			sharedAlerts = undefined;
 		}
 
-		const css = ".dshttRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:13px;flex-direction:column;flex:auto;display:flex}.dshttHeader{box-sizing:border-box;flex:none;align-items:center;gap:6px;padding:8px 8px 8px 12px;border-bottom:.5px solid var(--dsw-alias-border-l3);display:flex}.dshttHeaderTitle{font-weight:550;flex:auto;min-width:0}.dshttIcon{cursor:pointer;color:var(--dsw-alias-label-secondary);background:0 0;border:0;border-radius:10px;width:26px;height:26px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshttIcon:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttBody{flex:auto;min-height:0;overflow-y:auto;padding:8px}.dshttRow{border:.5px solid var(--dsw-alias-border-l3);border-radius:10px;align-items:stretch;min-height:58px;margin-bottom:6px;display:flex;overflow:hidden}.dshttRow[data-running]{border-color:var(--dsw-alias-border-l4)}.dshttRow[data-archived]{opacity:.72}.dshttMain{flex-direction:column;gap:4px;flex:auto;min-width:0;justify-content:center;padding:9px 10px;display:flex}.dshttRowTop{align-items:baseline;gap:6px;display:flex}.dshttTitle{min-width:0;font-weight:500;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.dshttState{color:var(--dsw-alias-label-tertiary);flex:none;font-size:11px}.dshttId{color:var(--dsw-alias-label-caption);overflow-wrap:anywhere;font-size:11px}.dshttActions{flex:none;align-items:stretch;display:flex}.dshttAction{color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;border-left:.5px solid var(--dsw-alias-border-l3);width:56px;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:6px 2px;font:inherit;display:flex}.dshttAction:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.dshttAction:disabled{opacity:.45;cursor:default}.dshttIconGreen{color:var(--dsw-alias-state-success-primary,#3fa66a)}.dshttIconRed{color:var(--dsw-alias-state-error-primary)}.dshttActionLabel{color:inherit;font-size:10px;line-height:12px}.dshttAction svg{width:22px;height:22px;flex:none}.dshttConfirmPanel{border-left:.5px solid var(--dsw-alias-border-l3);flex-direction:column;justify-content:center;gap:6px;max-width:190px;padding:8px 10px;display:flex}.dshttConfirm{color:var(--dsw-alias-label-secondary);flex:auto;min-width:0;font-size:12px}.dshttNote{color:var(--dsw-alias-label-secondary);margin:4px 2px;padding:6px 2px;font-size:12px;line-height:17px}";
+		const css = ".dshttRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:13px;flex-direction:column;flex:auto;display:flex}.dshttHeader{box-sizing:border-box;flex:none;align-items:center;gap:6px;padding:8px 8px 8px 12px;border-bottom:.5px solid var(--dsw-alias-border-l3);display:flex}.dshttHeaderTitle{font-weight:550;flex:auto;min-width:0}.dshttIcon{cursor:pointer;color:var(--dsw-alias-label-secondary);background:0 0;border:0;border-radius:10px;width:26px;height:26px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshttIcon:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttBody{flex:auto;min-height:0;overflow-y:auto;padding:8px}.dshttRow{border:.5px solid var(--dsw-alias-border-l3);border-radius:10px;align-items:stretch;min-height:58px;margin-bottom:6px;display:flex;overflow:hidden}.dshttRow[data-running]{border-color:var(--dsw-alias-border-l4)}.dshttRow[data-archived]{opacity:.72}.dshttMain{flex-direction:column;gap:4px;flex:auto;min-width:0;justify-content:center;padding:9px 10px;display:flex}.dshttRowTop{align-items:baseline;gap:6px;display:flex}.dshttTitle{min-width:0;font-weight:500;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.dshttState{color:var(--dsw-alias-label-tertiary);flex:none;font-size:11px}.dshttId{color:var(--dsw-alias-label-caption);overflow-wrap:anywhere;font-size:11px}.dshttActions{flex:none;align-items:stretch;display:flex}.dshttAction{color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;border-left:.5px solid var(--dsw-alias-border-l3);width:56px;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:6px 2px;font:inherit;display:flex}.dshttAction:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.dshttAction:disabled{opacity:.45;cursor:default}.dshttIconGreen{color:var(--dsw-alias-state-success-primary,#3fa66a)}.dshttIconYellow{color:var(--dsw-alias-state-warning-primary,#c8a04a)}.dshttIconRed{color:var(--dsw-alias-state-error-primary)}.dshttActionLabel{color:inherit;font-size:10px;line-height:12px}.dshttAction svg{width:22px;height:22px;flex:none}.dshttConfirmPanel{border-left:.5px solid var(--dsw-alias-border-l3);flex-direction:column;justify-content:center;gap:6px;max-width:190px;padding:8px 10px;display:flex}.dshttConfirm{color:var(--dsw-alias-label-secondary);flex:auto;min-width:0;font-size:12px}.dshttNote{color:var(--dsw-alias-label-secondary);margin:4px 2px;padding:6px 2px;font-size:12px;line-height:17px}";
 		const tagId = "dsh-plugin-thread-trash/ThreadTrash.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -50,6 +50,7 @@ window.__ModuleLoader__.load({
 			confirm: "dshttConfirm",
 			action: "dshttAction",
 			iconGreen: "dshttIconGreen",
+			iconYellow: "dshttIconYellow",
 			iconRed: "dshttIconRed",
 			actionLabel: "dshttActionLabel",
 			confirmPanel: "dshttConfirmPanel",
@@ -164,6 +165,21 @@ window.__ModuleLoader__.load({
 				react_jsx_runtime.jsx("path", { d: "M2 3.5h12v3H2z" }),
 				react_jsx_runtime.jsx("path", { d: "M3 6.5v6h10v-6" }),
 				react_jsx_runtime.jsx("path", { d: "M6.5 9.5h3" })
+			]
+		});
+
+		const UnarchiveGlyph = () => react_jsx_runtime.jsxs("svg", {
+			width: 13,
+			height: 13,
+			viewBox: "0 0 16 16",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: 1.4,
+			strokeLinecap: "round",
+			children: [
+				react_jsx_runtime.jsx("path", { d: "M2.8 6.1 12.6 4" }),
+				react_jsx_runtime.jsx("path", { d: "M3.4 7.3v5.5h9.2V7.3" }),
+				react_jsx_runtime.jsx("path", { d: "M6.8 10h2.4" })
 			]
 		});
 
@@ -292,12 +308,12 @@ window.__ModuleLoader__.load({
 						h("div", { className: STYLE.actions },
 								h("button", {
 									type: "button",
-									className: `${STYLE.action} ${STYLE.iconGreen}`,
+									className: `${STYLE.action} ${thread.archived === true ? STYLE.iconGreen : STYLE.iconYellow}`,
 									disabled: busy,
 									title: thread.archived === true ? "Unarchive" : "Archive",
 									"data-action": thread.archived === true ? "unarchive" : "archive",
 									onClick: () => void toggleArchive(thread)
-								}, h(ArchiveGlyph), h("span", { className: STYLE.actionLabel }, thread.archived === true ? "Unarchive" : "Archive")),
+								}, thread.archived === true ? h(UnarchiveGlyph) : h(ArchiveGlyph), h("span", { className: STYLE.actionLabel }, thread.archived === true ? "Unarchive" : "Archive")),
 								h("button", {
 									type: "button",
 									className: `${STYLE.action} ${STYLE.iconRed}`,

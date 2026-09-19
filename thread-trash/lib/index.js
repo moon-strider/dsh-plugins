@@ -189,7 +189,7 @@ async function cleanWorkspaceRegistry(config, ids, journal) {
 
 async function deleteThread(ctx, journal, services, config, caller, target) {
 	const sessions = services.sessions;
-	const header = sessions?.get?.(target)?.header;
+	const header = sessions?.get?.(target)?.header ?? (await observedHeader(services, target));
 	if (header === undefined) throw new Error(`thread "${target}" could not be found`);
 	if (header.origin === "subagent") throw new Error("only root threads can be deleted");
 	const cwd = caller?.session?.header?.cwd;
@@ -506,7 +506,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				}
 				const target = typeof body?.target === "string" ? body.target : "";
 				if (target.length === 0) return Response.json({ ok: false, error: "target is required" }, { status: 400 });
-				const header = services.sessions?.get?.(target)?.header;
+				const header = services.sessions?.get?.(target)?.header ?? (await observedHeader(services, target));
 				if (header === undefined) return Response.json({ ok: false, error: `thread "${target}" was not found` }, { status: 404 });
 				if (header.origin === "subagent") return Response.json({ ok: false, error: "only root threads can be deleted" }, { status: 400 });
 				if (ctx.agents?.get?.(target)?.status === "running") return Response.json({ ok: false, error: `thread "${target}" is running; stop it first` }, { status: 409 });
