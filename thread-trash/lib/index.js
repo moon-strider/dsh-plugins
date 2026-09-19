@@ -392,12 +392,34 @@ async function observedHeader(services, sessionId) {
 	}
 }
 
-async function rootThreads(ctx, services) {
+async function draftSessionIds(services, config, listed) {
+	const drafts = new Set();
+	if (typeof services.sessionController?.list === "function") {
+		try {
+			for (const summary of await services.sessionController.list(new AbortController().signal)) {
+				const metadata = summary?.projections?.values?.sessionListMetadata;
+				if (summary?.blank === true || metadata?.lastPromptAt === null) drafts.add(summary.sessionId);
+			}
+		} catch {}
+	}
+	for (const id of listed) {
+		if (drafts.has(id)) continue;
+		try {
+			const raw = JSON.parse(await readFile(join(config.storagesRoot, "session_projcache", "sessions", `${id}.json`), "utf8"));
+			const metadata = raw?.record?.rows?.sessionListMetadata?.val;
+			if (metadata?.blank === true || metadata?.lastPromptAt === null) drafts.add(id);
+		} catch {}
+	}
+	return drafts;
+}
+
+async function rootThreads(ctx, services, config) {
 	const published = [];
 	const listed = typeof services.sessionQuery?.listSessions === "function"
 		? (await services.sessionQuery.listSessions(new AbortController().signal)).map((record) => ({ id: record.header.id, header: record.header }))
 		: (services.sessions?.list?.() ?? []);
 	const archivedIds = archivedSessionIds(ctx);
+	const draftIds = await draftSessionIds(services, config, listed.map((entry) => entry.id));
 	for (const entry of listed) {
 		const live = ctx.agents?.get?.(entry.id);
 		published.push({
@@ -406,6 +428,7 @@ async function rootThreads(ctx, services) {
 			origin: entry.header?.origin,
 			live: live !== undefined,
 			running: live?.status === "running",
+			blank: draftIds.has(entry.id),
 			archived: archivedIds.includes(entry.id)
 		});
 	}
@@ -444,9 +467,9 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				const denied = guard(request);
 				if (denied !== undefined) return denied;
 				try {
-				const items = await rootThreads(ctx, services);
+				const items = await rootThreads(ctx, services, config);
 				const threads = items
-					.filter((item) => item.origin !== "subagent")
+					.filter((item) => item.origin !== "subagent" && item.blank !== true)
 					.map((item) => {
 						const live = ctx.agents?.get?.(item.sessionId);
 						return {
@@ -455,7 +478,8 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 							cwd: item.cwd,
 							live: item.live === true || live !== undefined,
 							running: live?.status === "running" || (live === undefined && item.running === true),
-							archived: item.archived === true
+							archived: item.archived === true,
+							blank: item.blank === true
 						};
 					});
 				const snapshot = journal.snapshot();

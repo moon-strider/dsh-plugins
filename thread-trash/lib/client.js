@@ -209,7 +209,7 @@ window.__ModuleLoader__.load({
 						const payload = await response.json();
 						if (cancelled) return;
 						const cwd = currentCwd();
-						const threads = (payload?.threads ?? []).filter((thread) => cwd === undefined || thread.cwd === undefined || thread.cwd === cwd);
+						const threads = (payload?.threads ?? []).filter((thread) => thread.blank !== true && (cwd === undefined || thread.cwd === undefined || thread.cwd === cwd));
 						setState({ phase: "ready", threads, error: undefined });
 						resolveDiagnostic("PANEL-FETCH");
 					} catch (error) {
