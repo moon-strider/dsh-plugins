@@ -31,6 +31,7 @@ this plugin is removed.
   pill occupies. Pointing left means collapsed, pointing down means expanded; clicking switches
   between them. It carries only an accessible label, never visible text, and is the rightmost
   control of the header. A diff of ten rows or fewer has no toggle, because nothing is hidden.
+  The Inspect pill beside it is always visible, not hover-only like the built-in row.
 - **Wrap**: long lines wrap instead of scrolling sideways, so the ten-row preview always fits
   the chat column.
 - **Surface**: the card keeps the dsh code-block background and radius, and the added and
@@ -40,9 +41,10 @@ this plugin is removed.
   changed fragments *inside* a partly changed line get the same token one step stronger —
   14% in light, 18% in dark over the row — so a modified word reads as a slightly deeper shade
   of the row instead of a saturated block.
-- **States**: a running call previews the diff derived from its arguments, a failed call keeps
-  its status and result text, a nested code-dispatch call renders its row without a diff, and
-  an unparseable call falls back to the raw result text.
+- **States**: a running call previews the diff derived from its arguments; a failed or
+  interrupted mutation shows only its status and its result text, never the diff it intended,
+  because nothing was applied; a nested code-dispatch call renders its row without a diff; an
+  unparseable call falls back to the raw result text.
 - **Fallback**: if the pinned bundle cannot be loaded, the card renders the same preview from
   its own plain line renderer and expands the same way. A diagnostic is logged to the browser
   console with the `[dsh-plugin-diff-preview]` prefix.

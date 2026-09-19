@@ -365,8 +365,7 @@ window.__ModuleLoader__.load({
 				return { state, tool: intended.tool, path: intended.diff.path, ...built, output: null, reason: "running" };
 			}
 			if (state === "error" || state === "stopped") {
-				const built = buildHunks([intended.diff]);
-				return { state, tool: intended.tool, path: intended.diff.path, ...built, output: resultText(block), reason: "failed" };
+				return { state, tool: intended.tool, path: intended.diff.path, hunks: [], added: 0, removed: 0, total: 0, output: resultText(block), reason: "failed" };
 			}
 			const applied = narrowHunks(block.meta?.diffs);
 			if (applied === null) {
@@ -647,7 +646,7 @@ window.__ModuleLoader__.load({
 
 			let body = null;
 			if (model.hunks.length === 0) {
-				body = h("p", { className: STYLE.note }, t("empty"));
+				body = model.reason === "subcall" ? h("p", { className: STYLE.note }, t("empty")) : null;
 			} else {
 				const content = pierreActive
 					? h(PierreHunks, { mod: bundle, hunks: model.hunks, dark, measure })
@@ -692,7 +691,7 @@ window.__ModuleLoader__.load({
 				"data-call": model.path ?? undefined
 			},
 				head,
-				model.hunks.length === 0 && output === null ? null : h("div", { className: STYLE.card, ref: cardRef }, body, foot, output)
+				model.hunks.length === 0 && output === null && model.reason !== "subcall" ? null : h("div", { className: STYLE.card, ref: cardRef }, body, foot, output)
 			);
 		};
 
