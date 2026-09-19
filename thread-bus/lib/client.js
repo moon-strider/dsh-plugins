@@ -108,6 +108,12 @@ window.__ModuleLoader__.load({
 			report: "Status report",
 			question: "Question"
 		};
+		const outgoing = {
+			thread: "To another thread",
+			instruction: "Instruction to subagent",
+			report: "Status report to parent",
+			question: "Question to parent"
+		};
 
 		const alerts = (() => {
 			const entries = new Map();
@@ -378,13 +384,13 @@ window.__ModuleLoader__.load({
 			const title = useThreadTitle(audit.toSessionId);
 			const rows = [
 				["card.target", title],
-				["card.kind", labels[audit.kind] ?? audit.kind],
+				["card.kind", outgoing[audit.kind] ?? audit.kind],
 				["card.mode", audit.mode],
 				["card.status", audit.status],
 				...(audit.at === "" ? [] : [["card.at", audit.at]])
 			];
 			return h("div", { className: STYLE.card, "data-thread-bus": "out" },
-				h("div", { className: STYLE.cardHead }, h("span", null, t("card.title")), h("span", { className: STYLE.cardValue }, labels[audit.kind] ?? audit.kind)),
+				h("div", { className: STYLE.cardHead }, h("span", null, t("card.title")), h("span", { className: STYLE.cardValue }, outgoing[audit.kind] ?? audit.kind)),
 				...rows.map(([key, value]) => h("div", { className: STYLE.cardRow, key }, h("span", { className: STYLE.cardKey }, t(key)), h("span", { className: STYLE.cardValue, title: String(value) }, String(value))))
 			);
 		};
