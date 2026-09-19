@@ -27,16 +27,19 @@ this plugin is removed.
 - **Counts**: `+added −removed` in the card header, using the lines that actually changed.
   The built-in card counts the hunk's context lines too, so a one-line edit reports `+7 −7`;
   here the same edit reports `+1 −1`.
-- **Toggle**: under the preview — where the built-in card puts its Inspect button — a
-  left-pointing chevron marks the collapsed preview and a down-pointing chevron marks the
-  expanded one; clicking switches between them. The hidden-row count sits next to the chevron.
-  A diff of ten rows or fewer has no toggle, because nothing is hidden.
+- **Toggle**: a wordless chevron in the top-right corner of the card — the slot the Inspect
+  pill occupies. Pointing left means collapsed, pointing down means expanded; clicking switches
+  between them. It carries only an accessible label, never visible text, and is the rightmost
+  control of the header. A diff of ten rows or fewer has no toggle, because nothing is hidden.
 - **Wrap**: long lines wrap instead of scrolling sideways, so the ten-row preview always fits
   the chat column.
 - **Surface**: the card keeps the dsh code-block background and radius, and the added and
   removed rows are tinted with `--dsw-alias-state-success-primary` and
   `--dsw-alias-state-error-primary`. The tint is the theme token blended into the card
-  surface at the theme's own ratio, so it stays subtle and readable in both themes.
+  surface at the theme's own ratio, so it stays subtle and readable in both themes. The
+  changed fragments *inside* a partly changed line get the same token one step stronger —
+  14% in light, 18% in dark over the row — so a modified word reads as a slightly deeper shade
+  of the row instead of a saturated block.
 - **States**: a running call previews the diff derived from its arguments, a failed call keeps
   its status and result text, a nested code-dispatch call renders its row without a diff, and
   an unparseable call falls back to the raw result text.

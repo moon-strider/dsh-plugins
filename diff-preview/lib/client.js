@@ -54,9 +54,9 @@ window.__ModuleLoader__.load({
 			+ ".dshdpLine[data-kind=ctx]{color:var(--dsw-alias-label-tertiary)}"
 			+ ".dshdpSign{user-select:none;width:14px;display:inline-block}"
 			+ ".dshdpFoot{border-top:.5px solid var(--dsw-alias-border-l2);align-items:center;gap:8px;padding:3px 14px 4px;display:flex}"
-			+ ".dshdpExpand{color:var(--dsw-alias-label-tertiary);cursor:pointer;font:inherit;background:0 0;border:none;border-radius:6px;align-items:center;gap:5px;margin:0;padding:1px 5px;display:inline-flex}"
-			+ ".dshdpExpand:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}"
-			+ ".dshdpExpandGlyph{flex:none;display:inline-flex}"
+			+ ".dshdpToggle{color:var(--dsw-alias-label-secondary);cursor:pointer;flex:none;justify-content:center;align-items:center;width:20px;height:20px;margin:0;padding:0;background:0 0;border:none;border-radius:6px;display:inline-flex}"
+			+ ".dshdpToggle:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}"
+			+ ".dshdpToggle:focus-visible{outline:1px solid var(--dsw-alias-border-l4);outline-offset:1px}"
 			+ ".dshdpOutput{border-top:.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;margin:0;padding:8px 14px;font:var(--dsw-font-markdown-code-block);overflow-y:auto}"
 			+ ".dshdpOutput[data-error]{color:var(--dsw-alias-state-error-primary)}"
 			+ ".dshdpNote{color:var(--dsw-alias-label-tertiary);padding:6px 14px;font:var(--dsw-font-markdown-code-block)}";
@@ -84,7 +84,6 @@ window.__ModuleLoader__.load({
 			card: "dshdpCard",
 			frame: "dshdpFrame",
 			clip: "dshdpClip",
-			expandGlyph: "dshdpExpandGlyph",
 			stack: "dshdpStack",
 			hunk: "dshdpHunk",
 			gap: "dshdpGap",
@@ -92,7 +91,7 @@ window.__ModuleLoader__.load({
 			line: "dshdpLine",
 			sign: "dshdpSign",
 			foot: "dshdpFoot",
-			expand: "dshdpExpand",
+			toggle: "dshdpToggle",
 			output: "dshdpOutput",
 			note: "dshdpNote"
 		};
@@ -104,13 +103,11 @@ window.__ModuleLoader__.load({
 			"state.failed": "Failed",
 			"state.stopped": "Stopped",
 			"inspect": "Inspect",
-			"expand": "… {count} more lines",
-			"collapse": "Collapse",
 			"expandAria": "Expand {count} more diff lines",
 			"collapseAria": "Collapse diff",
 			"openFile": "Open {path}",
 			"empty": "No line changes were recorded for this call",
-			"partial": "The first {count} lines show a plain rendering while the highlighted view loads"
+			"partial": "Plain rendering: the highlighted view is unavailable"
 		};
 		const ru = {
 			"title.edit": "Правка",
@@ -119,13 +116,11 @@ window.__ModuleLoader__.load({
 			"state.failed": "Ошибка",
 			"state.stopped": "Остановлено",
 			"inspect": "Разбор",
-			"expand": "… ещё {count} строк",
-			"collapse": "Свернуть",
 			"expandAria": "Показать ещё {count} строк диффа",
 			"collapseAria": "Свернуть дифф",
 			"openFile": "Открыть {path}",
 			"empty": "Для этого вызова изменения строк не записаны",
-			"partial": "Первые {count} строк показаны простым рендером, пока грузится подсветка"
+			"partial": "Простой рендер: подсветка недоступна"
 		};
 		const zh = {
 			"title.edit": "编辑",
@@ -134,13 +129,11 @@ window.__ModuleLoader__.load({
 			"state.failed": "失败",
 			"state.stopped": "已停止",
 			"inspect": "查看",
-			"expand": "… 其余 {count} 行",
-			"collapse": "收起",
 			"expandAria": "展开其余 {count} 行差异",
 			"collapseAria": "收起差异",
 			"openFile": "打开 {path}",
 			"empty": "此调用未记录行变更",
-			"partial": "高亮加载中，前 {count} 行使用纯文本渲染"
+			"partial": "纯文本渲染：高亮视图不可用"
 		};
 
 		const diagnose = (code, level, scope, message, detail) => {
@@ -637,6 +630,19 @@ window.__ModuleLoader__.load({
 				stateLabel === null ? null : h("span", { className: STYLE.state, "data-state": model.state }, stateLabel),
 				typeof inspect === "function"
 					? h("button", { type: "button", className: STYLE.inspect, onClick: () => inspect() }, h(InspectGlyph), t("inspect"))
+					: null,
+				hidden > 0
+					? h("button", {
+						type: "button",
+						className: STYLE.toggle,
+						"aria-expanded": expanded ? "true" : "false",
+						"aria-label": expanded ? t("collapseAria") : t("expandAria", { count: hidden }),
+						"data-open": expanded ? "true" : "false",
+						onClick: () => {
+							setAtBottom(false);
+							setExpanded((value) => !value);
+						}
+					}, h(ChevronGlyph, { open: expanded }))
 					: null
 			);
 
@@ -671,23 +677,8 @@ window.__ModuleLoader__.load({
 				return () => observer.disconnect();
 			}, [measure]);
 
-			const foot = hidden > 0
-				? h("div", { className: STYLE.foot },
-					h("button", {
-						type: "button",
-						className: STYLE.expand,
-						"aria-expanded": expanded ? "true" : "false",
-						"aria-label": expanded ? t("collapseAria") : t("expandAria", { count: hidden }),
-						"data-open": expanded ? "true" : "false",
-						onClick: () => {
-							setAtBottom(false);
-							setExpanded((value) => !value);
-						}
-					},
-					h("span", { className: STYLE.expandGlyph }, h(ChevronGlyph, { open: expanded })),
-					expanded ? t("collapse") : t("expand", { count: hidden })),
-					pierreActive || bundle !== null ? null : h("span", { className: STYLE.state }, t("partial", { count: PREVIEW_ROWS }))
-				)
+			const foot = bundle === null && model.hunks.length > 0
+				? h("div", { className: STYLE.foot }, h("span", { className: STYLE.state }, t("partial")))
 				: null;
 
 			const output = model.output !== null && model.output !== undefined && model.output !== ""
