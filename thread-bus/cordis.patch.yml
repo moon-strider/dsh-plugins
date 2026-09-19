@@ -1,0 +1,7 @@
+# The thread-bus plugin's own patch layer: inserts the package as a Loader
+# entry so the client-modules node half scans its dsh.client declaration into
+# window.__DSH_BOOT__. The host half registers the agent tools; the browser
+# half renders the origin labels, the outgoing card and the alert stack.
+- insert:
+    - id: thread-bus
+      name: 'dsh-plugin-thread-bus'

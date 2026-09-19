@@ -1,0 +1,30 @@
+{
+	"name": "dsh-plugin-thread-bus",
+	"description": "Typed agent-to-agent messaging for the dsh web GUI: cross-thread instructions between root threads, parent instructions to subagents, subagent status reports and questions, each visibly labelled in chat",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "lib/index.js",
+	"exports": {
+		".": "./lib/index.js",
+		"./client": "./lib/client.js",
+		"./package.json": "./package.json"
+	},
+	"dsh": {
+		"bundle": {
+			"patch": "./cordis.patch.yml"
+		},
+		"client": {
+			"platform": "web",
+			"inject": [
+				"@deepseek-ai/dsh-api-session-controller",
+				"@deepseek-ai/dsh-client-locale",
+				"@deepseek-ai/dsh-client-ui-conversation",
+				"@deepseek-ai/dsh-client-ui-layout",
+				"@deepseek-ai/dsh-client-ui-renderer",
+				"@deepseek-ai/dsh-client-ui-session"
+			]
+		}
+	},
+	"license": "MIT"
+}
