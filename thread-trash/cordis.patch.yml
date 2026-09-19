@@ -1,0 +1,6 @@
+# The thread-trash plugin's own patch layer: inserts the package as a Loader
+# entry so the client-modules node half scans its dsh.client declaration. The
+# host half registers the delete_thread tool and the panel routes.
+- insert:
+    - id: thread-trash
+      name: 'dsh-plugin-thread-trash'
