@@ -7,6 +7,7 @@ A set of client-side plugins for [DeepSeek Harness (dsh)](https://github.com/dee
 | Plugin | What it does |
 |---|---|
 | [`subagent-menu`](./subagent-menu) | A "Subagents" tab in the right sidebar: the current chat's subagents with their status, stats and click-through into each subagent chat |
+| [`thread-trash`](./thread-trash) | Deletes root threads: moves the thread log, its subagent logs and its records to the system Trash, with an agent tool (and a panel on the way) |
 | [`thread-bus`](./thread-bus) | Typed agent-to-agent messaging: cross-thread instructions between root threads, parent instructions to subagents, subagent status reports and questions, each labelled in chat with its origin and what it expects |
 
 ## Installing a plugin into the web profile
