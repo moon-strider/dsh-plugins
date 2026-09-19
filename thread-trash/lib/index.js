@@ -195,10 +195,15 @@ async function deleteThread(ctx, journal, services, config, caller, target) {
 	const cwd = caller?.session?.header?.cwd;
 	if (cwd === undefined || header.cwd !== cwd) throw new Error("delete_thread is limited to threads of the same working directory");
 	const live = ctx.agents?.get?.(target);
-	if (live !== undefined) throw new Error(`thread "${target}" is still open in this server; stop it with stop_thread and close it, then delete it`);
+	if (live !== undefined && live.status === "running") throw new Error(`thread "${target}" is running; stop it with stop_thread, then delete it`);
 	const ids = [target, ...descendantsOf(ctx, target)];
-	const liveDescendant = ids.find((id) => ctx.agents?.get?.(id) !== undefined);
-	if (liveDescendant !== undefined) throw new Error(`subagent "${liveDescendant}" is still open in this server; stop the thread first`);
+	const runningDescendant = ids.find((id) => ctx.agents?.get?.(id)?.status === "running");
+	if (runningDescendant !== undefined) throw new Error(`subagent "${runningDescendant}" is running; stop the thread first`);
+	if (live !== undefined) {
+		try {
+			live.cancel({ kind: "user" });
+		} catch (error) {}
+	}
 	const trashed = [];
 	for (const id of ids) {
 		for (const directory of await sessionDirectories(config, id)) {
@@ -504,7 +509,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				const header = services.sessions?.get?.(target)?.header;
 				if (header === undefined) return Response.json({ ok: false, error: `thread "${target}" was not found` }, { status: 404 });
 				if (header.origin === "subagent") return Response.json({ ok: false, error: "only root threads can be deleted" }, { status: 400 });
-				if (ctx.agents?.get?.(target) !== undefined) return Response.json({ ok: false, error: `thread "${target}" is still open in this server; stop it and close it first` }, { status: 409 });
+				if (ctx.agents?.get?.(target)?.status === "running") return Response.json({ ok: false, error: `thread "${target}" is running; stop it first` }, { status: 409 });
 				try {
 					const result = await deleteThread(ctx, journal, services, config, { session: { header } }, target);
 					return Response.json({ ok: true, deleted: result.ids, trashed: result.trashed });
