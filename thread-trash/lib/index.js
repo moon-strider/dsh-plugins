@@ -194,10 +194,10 @@ async function deleteThread(ctx, journal, services, config, caller, target) {
 	const cwd = caller?.session?.header?.cwd;
 	if (cwd === undefined || header.cwd !== cwd) throw new Error("delete_thread is limited to threads of the same working directory");
 	const live = ctx.agents?.get?.(target);
-	if (live !== undefined) throw new Error(`thread "${target}" is running; stop it first with stop_thread, then delete it`);
+	if (live !== undefined) throw new Error(`thread "${target}" is still open in this server; stop it with stop_thread and close it, then delete it`);
 	const ids = [target, ...descendantsOf(ctx, target)];
 	const liveDescendant = ids.find((id) => ctx.agents?.get?.(id) !== undefined);
-	if (liveDescendant !== undefined) throw new Error(`subagent "${liveDescendant}" is still running; stop the thread first`);
+	if (liveDescendant !== undefined) throw new Error(`subagent "${liveDescendant}" is still open in this server; stop the thread first`);
 	const trashed = [];
 	for (const id of ids) {
 		for (const directory of await sessionDirectories(config, id)) {
@@ -335,12 +335,17 @@ function registerTool(ctx, journal, services, config) {
 
 async function rootThreads(ctx, services) {
 	const published = [];
-	for (const entry of services.sessions?.list?.() ?? []) {
+	const listed = typeof services.sessionQuery?.listSessions === "function"
+		? (await services.sessionQuery.listSessions(new AbortController().signal)).map((record) => ({ id: record.header.id, header: record.header }))
+		: (services.sessions?.list?.() ?? []);
+	for (const entry of listed) {
+		const live = ctx.agents?.get?.(entry.id);
 		published.push({
 			sessionId: entry.id,
 			cwd: entry.header?.cwd,
 			origin: entry.header?.origin,
-			running: ctx.agents?.get?.(entry.id) !== undefined
+			live: live !== undefined,
+			running: live?.status === "running"
 		});
 	}
 	if (typeof services.sessionQuery?.readTitleSnapshots === "function" && published.length > 0) {
@@ -380,8 +385,17 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				try {
 				const items = await rootThreads(ctx, services);
 				const threads = items
-					.filter((item) => item.origin !== "subagent" && item.cwd !== undefined)
-					.map((item) => ({ sessionId: item.sessionId, title: item.projections?.values?.title ?? item.title ?? undefined, cwd: item.cwd, running: item.running === true || ctx.agents?.get?.(item.sessionId) !== undefined }));
+					.filter((item) => item.origin !== "subagent")
+					.map((item) => {
+						const live = ctx.agents?.get?.(item.sessionId);
+						return {
+							sessionId: item.sessionId,
+							title: item.projections?.values?.title ?? item.title ?? undefined,
+							cwd: item.cwd,
+							live: item.live === true || live !== undefined,
+							running: live?.status === "running" || (live === undefined && item.running === true)
+						};
+					});
 				const snapshot = journal.snapshot();
 				return Response.json({ plugin: PACKAGE, revision: snapshot.revision, threads, entries: snapshot.entries });
 				} catch (error) {
@@ -407,7 +421,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				const header = services.sessions?.get?.(target)?.header;
 				if (header === undefined) return Response.json({ ok: false, error: `thread "${target}" was not found` }, { status: 404 });
 				if (header.origin === "subagent") return Response.json({ ok: false, error: "only root threads can be deleted" }, { status: 400 });
-				if (ctx.agents?.get?.(target) !== undefined) return Response.json({ ok: false, error: `thread "${target}" is running; stop it first` }, { status: 409 });
+				if (ctx.agents?.get?.(target) !== undefined) return Response.json({ ok: false, error: `thread "${target}" is still open in this server; stop it and close it first` }, { status: 409 });
 				try {
 					const result = await deleteThread(ctx, journal, services, config, { session: { header } }, target);
 					return Response.json({ ok: true, deleted: result.ids, trashed: result.trashed });

@@ -60,11 +60,13 @@ window.__ModuleLoader__.load({
 			"failed": "The thread list could not be loaded",
 			"running": "running",
 			"idle": "stopped",
+			"open": "open",
 			"delete": "Move to Trash",
 			"confirm": "Delete this thread and its subagents?",
 			"confirmYes": "Yes, to Trash",
 			"confirmNo": "Cancel",
 			"stopFirst": "Stop it first",
+			"closeFirst": "Stop it and close it first",
 			"deleted": "Moved to the Trash",
 			"note": "Deleting moves the thread log to the system Trash; it stays recoverable."
 		};
@@ -79,11 +81,13 @@ window.__ModuleLoader__.load({
 			"failed": "Не удалось загрузить список тредов",
 			"running": "работает",
 			"idle": "остановлен",
+			"open": "открыт",
 			"delete": "В корзину",
 			"confirm": "Удалить этот тред вместе с его субагентами?",
 			"confirmYes": "Да, в корзину",
 			"confirmNo": "Отмена",
 			"stopFirst": "Сначала остановите",
+			"closeFirst": "Сначала остановите и закройте",
 			"deleted": "Перемещено в корзину",
 			"note": "Удаление переносит лог треда в системную корзину; его можно восстановить."
 		};
@@ -98,11 +102,13 @@ window.__ModuleLoader__.load({
 			"failed": "无法加载线程列表",
 			"running": "运行中",
 			"idle": "已停止",
+			"open": "已打开",
 			"delete": "移到废纸篓",
 			"confirm": "删除此线程及其子代理？",
 			"confirmYes": "是，移到废纸篓",
 			"confirmNo": "取消",
 			"stopFirst": "请先停止",
+			"closeFirst": "请先停止并关闭",
 			"deleted": "已移到废纸篓",
 			"note": "删除会将线程日志移到系统废纸篓，仍可恢复。"
 		};
@@ -151,17 +157,6 @@ window.__ModuleLoader__.load({
 			}]
 		});
 
-		const currentWorkspace = (sessions) => {
-			try {
-				const snapshot = sessions?.list?.getSnapshot?.();
-				const current = snapshot?.current;
-				const found = snapshot?.byId?.[current] ?? snapshot?.items?.find((item) => item.sessionId === current);
-				return found?.cwd;
-			} catch (error) {
-				return undefined;
-			}
-		};
-
 		const ThreadTrashBody = ({ t, sessions }) => {
 			const [state, setState] = react.useState({ phase: "loading", threads: [], error: undefined });
 			const [confirming, setConfirming] = react.useState(undefined);
@@ -176,8 +171,7 @@ window.__ModuleLoader__.load({
 						if (!response.ok) throw new Error(`HTTP ${response.status}`);
 						const payload = await response.json();
 						if (cancelled) return;
-						const cwd = currentWorkspace(sessions);
-						const threads = (payload?.threads ?? []).filter((thread) => cwd === undefined || thread.cwd === undefined || thread.cwd === cwd);
+						const threads = payload?.threads ?? [];
 						setState({ phase: "ready", threads, error: undefined });
 						resolveDiagnostic("PANEL-FETCH");
 					} catch (error) {
@@ -234,7 +228,7 @@ window.__ModuleLoader__.load({
 					...state.threads.map((thread) => h("div", { className: STYLE.row, key: thread.sessionId, "data-thread": thread.sessionId, "data-running": thread.running ? "true" : undefined },
 						h("div", { className: STYLE.rowTop },
 							h("span", { className: STYLE.title, title: thread.sessionId }, thread.title ?? thread.sessionId),
-							h("span", { className: STYLE.state }, thread.running ? t("running") : t("idle"))
+							h("span", { className: STYLE.state }, thread.running === true ? t("running") : thread.live === true ? t("open") : t("idle"))
 						),
 						h("span", { className: STYLE.id }, thread.sessionId),
 						h("div", { className: STYLE.actions },
@@ -247,8 +241,8 @@ window.__ModuleLoader__.load({
 								: h("button", {
 									type: "button",
 									className: `${STYLE.button} ${STYLE.danger}`,
-									disabled: thread.running === true,
-									title: thread.running === true ? t("stopFirst") : t("delete"),
+									disabled: thread.live === true,
+									title: thread.live === true ? t("closeFirst") : t("delete"),
 									onClick: () => setConfirming(thread.sessionId)
 								}, t("delete"))
 						)
