@@ -1237,10 +1237,16 @@ export function apply(ctx, rawConfig) {
 		const agent = payload?.agent;
 		if (agent?.id !== undefined) limits.beginTurn(agent.id, payload?.turn ?? 0);
 		if (agent?.id !== undefined && waiting.has(agent.id)) {
+			const claimed = Array.isArray(payload?.messages) ? payload.messages : [];
+			if (claimed.length > 0) {
+				waiting.delete(agent.id);
+				journal.clear(`WAIT-${agent.id}`);
+				return next();
+			}
 			journal.put(`WAIT-${agent.id}`, "info", "wait", "this subagent is paused until its parent answers", {
-				expected: "an instruct_subagent from the parent to resume",
+				expected: "an answer from the parent, whatever channel it arrives on",
 				observed: "waiting",
-				hint: "ask_parent pauses the caller; the parent owns the answer"
+				hint: "ask_parent pauses the caller; any inbound message from the parent resumes it"
 			});
 			return { kind: "reject" };
 		}
