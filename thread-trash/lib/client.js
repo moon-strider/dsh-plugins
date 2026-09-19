@@ -275,7 +275,6 @@ window.__ModuleLoader__.load({
 					const payload = await response.json().catch(() => ({}));
 					if (!response.ok || payload?.ok !== true) throw new Error(payload?.error ?? `HTTP ${response.status}`);
 					resolveDiagnostic("PANEL-DELETE");
-					if (sharedAlerts !== undefined) sharedAlerts.push({ code: `TRASH-${target}`, level: "info", scope: "panel", message: t("deleted"), expected: "", observed: "", hint: "", logs: [] });
 				} catch (error) {
 					diagnose("PANEL-DELETE", "error", "panel", "the thread could not be deleted", {
 						expected: `POST ${DELETE_URL} moves the thread to the Trash`,
