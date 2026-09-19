@@ -13,6 +13,7 @@ window.__ModuleLoader__.load({
 		const TAB_ORDER = 30;
 		const THREADS_URL = "/api/plugins/thread-trash/threads";
 		const DELETE_URL = "/api/plugins/thread-trash/delete";
+		const ARCHIVE_URL = "/api/plugins/thread-trash/archive";
 		const DIAG_PREFIX = "[dsh-plugin-thread-trash]";
 
 		let sharedAlerts;
@@ -22,7 +23,7 @@ window.__ModuleLoader__.load({
 			sharedAlerts = undefined;
 		}
 
-		const css = ".dshttRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:13px;flex-direction:column;flex:auto;display:flex}.dshttHeader{box-sizing:border-box;flex:none;align-items:center;gap:6px;padding:8px 8px 8px 12px;border-bottom:.5px solid var(--dsw-alias-border-l3);display:flex}.dshttHeaderTitle{font-weight:550;flex:auto;min-width:0}.dshttIcon{cursor:pointer;color:var(--dsw-alias-label-secondary);background:0 0;border:0;border-radius:10px;width:26px;height:26px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshttIcon:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttBody{flex:auto;min-height:0;overflow-y:auto;padding:8px}.dshttRow{border:.5px solid var(--dsw-alias-border-l3);border-radius:10px;flex-direction:column;gap:6px;margin-bottom:6px;padding:8px 10px;display:flex}.dshttRow[data-running]{border-color:var(--dsw-alias-border-l4)}.dshttRowTop{align-items:baseline;gap:6px;display:flex}.dshttTitle{min-width:0;font-weight:500;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.dshttState{color:var(--dsw-alias-label-tertiary);flex:none;font-size:11px}.dshttId{color:var(--dsw-alias-label-caption);overflow-wrap:anywhere;font-size:11px}.dshttActions{align-items:center;gap:6px;justify-content:flex-end;display:flex}.dshttButton{appearance:none;border:.5px solid var(--dsw-alias-border-l3);background:0 0;color:var(--dsw-alias-label-secondary);border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer}.dshttButton:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttButton:disabled{opacity:.5;cursor:default}.dshttDanger{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}.dshttDanger:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover-danger);color:var(--dsw-alias-state-error-primary)}.dshttConfirm{color:var(--dsw-alias-label-secondary);flex:auto;min-width:0;font-size:12px}.dshttNote{color:var(--dsw-alias-label-secondary);margin:4px 2px;padding:6px 2px;font-size:12px;line-height:17px}";
+		const css = ".dshttRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:13px;flex-direction:column;flex:auto;display:flex}.dshttHeader{box-sizing:border-box;flex:none;align-items:center;gap:6px;padding:8px 8px 8px 12px;border-bottom:.5px solid var(--dsw-alias-border-l3);display:flex}.dshttHeaderTitle{font-weight:550;flex:auto;min-width:0}.dshttIcon{cursor:pointer;color:var(--dsw-alias-label-secondary);background:0 0;border:0;border-radius:10px;width:26px;height:26px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshttIcon:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttBody{flex:auto;min-height:0;overflow-y:auto;padding:8px}.dshttRow{border:.5px solid var(--dsw-alias-border-l3);border-radius:10px;flex-direction:column;gap:6px;margin-bottom:6px;padding:8px 10px;display:flex}.dshttRow[data-running]{border-color:var(--dsw-alias-border-l4)}.dshttRowTop{align-items:baseline;gap:6px;display:flex}.dshttTitle{min-width:0;font-weight:500;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.dshttState{color:var(--dsw-alias-label-tertiary);flex:none;font-size:11px}.dshttId{color:var(--dsw-alias-label-caption);overflow-wrap:anywhere;font-size:11px}.dshttActions{align-items:flex-end;gap:10px;justify-content:flex-end;display:flex}.dshttAction{flex-direction:column;align-items:center;gap:2px;display:flex}.dshttIconButton{box-sizing:border-box;cursor:pointer;background:0 0;border:.5px solid var(--dsw-alias-border-l3);border-radius:8px;width:24px;height:24px;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshttIconButton:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}.dshttIconButton:disabled{opacity:.45;cursor:default}.dshttIconGreen{color:var(--dsw-alias-state-success-primary,#3fa66a);border-color:var(--dsw-alias-state-success-primary,#3fa66a)}.dshttIconRed{color:var(--dsw-alias-state-error-primary);border-color:var(--dsw-alias-state-error-primary)}.dshttActionLabel{color:var(--dsw-alias-label-caption);font-size:10px;line-height:12px}.dshttButton{appearance:none;border:.5px solid var(--dsw-alias-border-l3);background:0 0;color:var(--dsw-alias-label-secondary);border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer}.dshttButton:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshttButton:disabled{opacity:.5;cursor:default}.dshttDanger{border-color:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-state-error-primary)}.dshttDanger:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover-danger);color:var(--dsw-alias-state-error-primary)}.dshttConfirm{color:var(--dsw-alias-label-secondary);flex:auto;min-width:0;font-size:12px}.dshttNote{color:var(--dsw-alias-label-secondary);margin:4px 2px;padding:6px 2px;font-size:12px;line-height:17px}";
 		const tagId = "dsh-plugin-thread-trash/ThreadTrash.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -46,6 +47,11 @@ window.__ModuleLoader__.load({
 			button: "dshttButton",
 			danger: "dshttDanger",
 			confirm: "dshttConfirm",
+			action: "dshttAction",
+			iconButton: "dshttIconButton",
+			iconGreen: "dshttIconGreen",
+			iconRed: "dshttIconRed",
+			actionLabel: "dshttActionLabel",
 			note: "dshttNote"
 		};
 
@@ -145,6 +151,21 @@ window.__ModuleLoader__.load({
 			]
 		});
 
+		const ArchiveGlyph = () => react_jsx_runtime.jsxs("svg", {
+			width: 13,
+			height: 13,
+			viewBox: "0 0 16 16",
+			fill: "none",
+			stroke: "currentColor",
+			strokeWidth: 1.4,
+			strokeLinecap: "round",
+			children: [
+				react_jsx_runtime.jsx("path", { d: "M2 3.5h12v3H2z" }),
+				react_jsx_runtime.jsx("path", { d: "M3 6.5v6h10v-6" }),
+				react_jsx_runtime.jsx("path", { d: "M6.5 9.5h3" })
+			]
+		});
+
 		const definition = (t) => ({
 			id: SELF_ID,
 			kind: TAB_KIND,
@@ -171,7 +192,8 @@ window.__ModuleLoader__.load({
 						if (!response.ok) throw new Error(`HTTP ${response.status}`);
 						const payload = await response.json();
 						if (cancelled) return;
-						const threads = payload?.threads ?? [];
+						const cwd = currentCwd();
+						const threads = (payload?.threads ?? []).filter((thread) => cwd === undefined || thread.cwd === undefined || thread.cwd === cwd);
 						setState({ phase: "ready", threads, error: undefined });
 						resolveDiagnostic("PANEL-FETCH");
 					} catch (error) {
@@ -189,6 +211,41 @@ window.__ModuleLoader__.load({
 					cancelled = true;
 				};
 			}, [revision, sessions]);
+
+			const currentCwd = () => {
+				try {
+					const snapshot = sessions?.list?.getSnapshot?.();
+					const current = snapshot?.current;
+					const found = snapshot?.byId?.[current] ?? snapshot?.items?.find((item) => item.sessionId === current);
+					return found?.cwd;
+				} catch (error) {
+					return undefined;
+				}
+			};
+
+			const toggleArchive = async (thread) => {
+				setBusy(true);
+				try {
+					const response = await fetch(ARCHIVE_URL, {
+						method: "POST",
+						credentials: "same-origin",
+						headers: { "content-type": "application/json", accept: "application/json" },
+						body: JSON.stringify({ target: thread.sessionId, archived: thread.archived !== true })
+					});
+					const payload = await response.json().catch(() => ({}));
+					if (!response.ok || payload?.ok !== true) throw new Error(payload?.error ?? `HTTP ${response.status}`);
+					resolveDiagnostic("PANEL-ARCHIVE");
+				} catch (error) {
+					diagnose("PANEL-ARCHIVE", "error", "panel", "the archive state could not be changed", {
+						expected: `POST ${ARCHIVE_URL} toggles the archived flag`,
+						observed: String(error?.message ?? error),
+						hint: "the workspace registry must be mounted, or workspace.json must be writable"
+					});
+				} finally {
+					setBusy(false);
+					setRevision((value) => value + 1);
+				}
+			};
 
 			const remove = async (target) => {
 				setBusy(true);
@@ -225,27 +282,42 @@ window.__ModuleLoader__.load({
 					state.phase === "loading" ? h("p", { className: STYLE.note }, t("loading")) : null,
 					state.error === undefined ? null : h("p", { className: STYLE.note }, `${t("failed")}: ${state.error}`),
 					state.phase === "ready" && state.threads.length === 0 ? h("p", { className: STYLE.note }, t("empty")) : null,
-					...state.threads.map((thread) => h("div", { className: STYLE.row, key: thread.sessionId, "data-thread": thread.sessionId, "data-running": thread.running ? "true" : undefined },
+					...state.threads.map((thread) => h("div", { className: STYLE.row, key: thread.sessionId, "data-thread": thread.sessionId, "data-running": thread.running ? "true" : undefined, "data-archived": thread.archived === true ? "true" : undefined },
 						h("div", { className: STYLE.rowTop },
 							h("span", { className: STYLE.title, title: thread.sessionId }, thread.title ?? thread.sessionId),
 							h("span", { className: STYLE.state }, thread.running === true ? t("running") : thread.live === true ? t("open") : t("idle"))
 						),
 						h("span", { className: STYLE.id }, thread.sessionId),
-						h("div", { className: STYLE.actions },
-							confirming === thread.sessionId
-								? [
-									h("span", { className: STYLE.confirm, key: "confirm" }, t("confirm")),
-									h("button", { type: "button", className: `${STYLE.button} ${STYLE.danger}`, disabled: busy, key: "yes", onClick: () => void remove(thread.sessionId) }, t("confirmYes")),
-									h("button", { type: "button", className: STYLE.button, disabled: busy, key: "no", onClick: () => setConfirming(undefined) }, t("confirmNo"))
-								]
-								: h("button", {
-									type: "button",
-									className: `${STYLE.button} ${STYLE.danger}`,
-									disabled: thread.live === true,
-									title: thread.live === true ? t("closeFirst") : t("delete"),
-									onClick: () => setConfirming(thread.sessionId)
-								}, t("delete"))
-						)
+						confirming === thread.sessionId
+							? h("div", { className: STYLE.actions },
+								h("span", { className: STYLE.confirm }, t("confirm")),
+								h("button", { type: "button", className: `${STYLE.button} ${STYLE.danger}`, disabled: busy, onClick: () => void remove(thread.sessionId) }, t("confirmYes")),
+								h("button", { type: "button", className: STYLE.button, disabled: busy, onClick: () => setConfirming(undefined) }, t("confirmNo"))
+							)
+							: h("div", { className: STYLE.actions },
+								h("div", { className: STYLE.action },
+									h("button", {
+										type: "button",
+										className: `${STYLE.iconButton} ${STYLE.iconGreen}`,
+										disabled: busy,
+										title: thread.archived === true ? "Unarchive" : "Archive",
+										"data-action": thread.archived === true ? "unarchive" : "archive",
+										onClick: () => void toggleArchive(thread)
+									}, h(ArchiveGlyph)),
+									h("span", { className: STYLE.actionLabel }, thread.archived === true ? "Unarchive" : "Archive")
+								),
+								h("div", { className: STYLE.action },
+									h("button", {
+										type: "button",
+										className: `${STYLE.iconButton} ${STYLE.iconRed}`,
+										disabled: thread.live === true,
+										title: thread.live === true ? t("closeFirst") : "Delete",
+										"data-action": "delete",
+										onClick: () => setConfirming(thread.sessionId)
+									}, h(TrashGlyph)),
+									h("span", { className: STYLE.actionLabel }, "Delete")
+								)
+							)
 					)),
 					h("p", { className: STYLE.note }, t("note"))
 				)

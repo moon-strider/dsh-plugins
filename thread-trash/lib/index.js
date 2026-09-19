@@ -9,6 +9,7 @@ const PACKAGE = "dsh-plugin-thread-trash";
 const TOOL = "delete_thread";
 const ROUTE_THREADS = "/api/plugins/thread-trash/threads";
 const ROUTE_DELETE = "/api/plugins/thread-trash/delete";
+const ROUTE_ARCHIVE = "/api/plugins/thread-trash/archive";
 const DIAG_PREFIX = "[dsh-plugin-thread-trash]";
 
 const DEFAULT_CONFIG = {
@@ -333,11 +334,65 @@ function registerTool(ctx, journal, services, config) {
 	}
 }
 
+function workspaceRegistry(ctx) {
+	const registry = ctx.get("workspaceRegistry");
+	return registry !== undefined && typeof registry.requireState === "function" && typeof registry.setState === "function" ? registry : undefined;
+}
+
+function archivedSessionIds(ctx) {
+	const registry = workspaceRegistry(ctx);
+	if (registry === undefined) return [];
+	try {
+		return [...(registry.requireState().archivedSessionIds ?? [])];
+	} catch (error) {
+		return [];
+	}
+}
+
+async function setArchived(ctx, journal, config, target, archived) {
+	const registry = workspaceRegistry(ctx);
+	if (registry !== undefined) {
+		const state = registry.requireState();
+		const current = [...(state.archivedSessionIds ?? [])];
+		const next = archived ? [...new Set([...current, target])] : current.filter((id) => id !== target);
+		if (next.length !== current.length || archived) {
+			await registry.setState({ ...state, archivedSessionIds: next });
+			journal.clear("ARCHIVE");
+			return "registry";
+		}
+		return "registry";
+	}
+	const path = join(config.storagesRoot, "workspace.json");
+	if (!(await exists(path))) throw new Error("the workspace registry is unavailable, the archive state cannot be changed");
+	const state = JSON.parse(await readFile(path, "utf8"));
+	const current = state?.global?.archivedSessionIds ?? [];
+	const next = archived ? [...new Set([...current, target])] : current.filter((id) => id !== target);
+	state.global = { ...state.global, archivedSessionIds: next };
+	await writeFile(path, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+	journal.put("ARCHIVE", "warn", "the archive state was written directly because the workspace registry is not mounted", {
+		expected: "ctx.get('workspaceRegistry') with requireState/setState",
+		observed: "direct workspace.json edit",
+		hint: "@deepseek-ai/dsh-workspace is not mounted in this deployment"
+	});
+	return "file";
+}
+
+async function observedHeader(services, sessionId) {
+	const query = services.sessionQuery;
+	if (typeof query?.observeSession !== "function") return undefined;
+	try {
+		return (await query.observeSession(sessionId))?.header;
+	} catch (error) {
+		return undefined;
+	}
+}
+
 async function rootThreads(ctx, services) {
 	const published = [];
 	const listed = typeof services.sessionQuery?.listSessions === "function"
 		? (await services.sessionQuery.listSessions(new AbortController().signal)).map((record) => ({ id: record.header.id, header: record.header }))
 		: (services.sessions?.list?.() ?? []);
+	const archivedIds = archivedSessionIds(ctx);
 	for (const entry of listed) {
 		const live = ctx.agents?.get?.(entry.id);
 		published.push({
@@ -345,7 +400,8 @@ async function rootThreads(ctx, services) {
 			cwd: entry.header?.cwd,
 			origin: entry.header?.origin,
 			live: live !== undefined,
-			running: live?.status === "running"
+			running: live?.status === "running",
+			archived: archivedIds.includes(entry.id)
 		});
 	}
 	if (typeof services.sessionQuery?.readTitleSnapshots === "function" && published.length > 0) {
@@ -393,13 +449,40 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 							title: item.projections?.values?.title ?? item.title ?? undefined,
 							cwd: item.cwd,
 							live: item.live === true || live !== undefined,
-							running: live?.status === "running" || (live === undefined && item.running === true)
+							running: live?.status === "running" || (live === undefined && item.running === true),
+							archived: item.archived === true
 						};
 					});
 				const snapshot = journal.snapshot();
 				return Response.json({ plugin: PACKAGE, revision: snapshot.revision, threads, entries: snapshot.entries });
 				} catch (error) {
 					return Response.json({ plugin: PACKAGE, error: String(error?.stack ?? error) }, { status: 500 });
+				}
+			}
+		});
+		connection.fetch.register({
+			path: ROUTE_ARCHIVE,
+			methods: ["POST"],
+			requestBody: "buffered",
+			fetch: async (request) => {
+				const denied = guard(request);
+				if (denied !== undefined) return denied;
+				let body;
+				try {
+					body = await request.json();
+				} catch (error) {
+					return Response.json({ ok: false, error: "the request body must be JSON" }, { status: 400 });
+				}
+				const target = typeof body?.target === "string" ? body.target : "";
+				if (target.length === 0) return Response.json({ ok: false, error: "target is required" }, { status: 400 });
+				const header = services.sessions?.get?.(target)?.header ?? (await observedHeader(services, target));
+				if (header === undefined) return Response.json({ ok: false, error: `thread "${target}" was not found` }, { status: 404 });
+				if (header.origin === "subagent") return Response.json({ ok: false, error: "only root threads can be archived" }, { status: 400 });
+				try {
+					const via = await setArchived(ctx, journal, config, target, body.archived !== false);
+					return Response.json({ ok: true, archived: body.archived !== false, via });
+				} catch (error) {
+					return Response.json({ ok: false, error: String(error?.message ?? error) }, { status: 500 });
 				}
 			}
 		});
