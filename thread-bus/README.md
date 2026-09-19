@@ -65,7 +65,7 @@ Every assumption about dsh internals is a runtime check with a stable code, a le
 | Code | Meaning | Where to look |
 |---|---|---|
 | `SVC-<service>` | an optional host service is not mounted; the capability stays off until it appears | `dsh plugin` composition for this profile |
-| `API-<method>` | a service method is missing or renamed | `@deepseek-ai/dsh-subagent` (`steerPrompt`), `@deepseek-ai/dsh-api-session-controller` (`resolveAgent`) |
+| `API-<method>` | a service method is missing or renamed | `@deepseek-ai/dsh-subagent` (`Symbol.for('dsh.subagent.deliverPrompt')`), `@deepseek-ai/dsh-api-session-controller` (`resolveAgent`) |
 | `TOOL-REGISTER-<tool>` / `TOOL-VISIBLE-<tool>` | the tool definition was rejected or is not registered | `@deepseek-ai/dsh-tools` `register()` |
 | `INJECT-<agent>-<tool>` | the tool is not visible to a live agent, or its description differs from the registered one | `@deepseek-ai/dsh-tools` layers/`restrict`, or a preset/delegation `toolFilter` |
 | `SCOPE-VISIBLE-<agent>-<tool>` | an agent sees a tool its role forbids | the `agent/created` role restriction |
