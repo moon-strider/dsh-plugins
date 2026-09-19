@@ -1,0 +1,6 @@
+# The diff-preview plugin's own patch layer: inserts the package as a Loader
+# entry so the client-modules node half scans its dsh.client declaration. The
+# host half serves the pinned @pierre/diffs bundle and the plugin diagnostics.
+- insert:
+    - id: diff-preview
+      name: 'dsh-plugin-diff-preview'

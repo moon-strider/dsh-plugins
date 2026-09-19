@@ -1,0 +1,18 @@
+{
+	"name": "dsh-plugin-diff-preview-vendor",
+	"private": true,
+	"description": "Build workspace for the pinned @pierre/diffs bundle served by dsh-plugin-diff-preview",
+	"type": "module",
+	"scripts": {
+		"build": "node build.mjs"
+	},
+	"dependencies": {
+		"@pierre/diffs": "1.4.3",
+		"@pierre/theme": "2.0.0",
+		"@shikijs/langs": "4.4.3",
+		"shiki": "4.4.3"
+	},
+	"devDependencies": {
+		"esbuild": "0.28.2"
+	}
+}

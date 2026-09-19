@@ -1,0 +1,35 @@
+{
+	"name": "dsh-plugin-diff-preview",
+	"description": "Chat-only inline diff preview for file edits: the first ten diff rows with green and red, real added and removed counts, and an expander, rendered by a pinned @pierre/diffs bundle",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "lib/index.js",
+	"exports": {
+		".": "./lib/index.js",
+		"./client": "./lib/client.js",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"lib/index.js",
+		"lib/client.js",
+		"lib/vendor/pierre-diffs.js",
+		"lib/vendor/VERSION.json",
+		"README.md",
+		"cordis.patch.yml"
+	],
+	"dsh": {
+		"bundle": {
+			"patch": "./cordis.patch.yml"
+		},
+		"client": {
+			"platform": "web",
+			"inject": [
+				"@deepseek-ai/dsh-client-locale",
+				"@deepseek-ai/dsh-client-ui-renderer",
+				"@deepseek-ai/dsh-client-ui-tool"
+			]
+		}
+	},
+	"license": "MIT"
+}
