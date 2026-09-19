@@ -6,10 +6,16 @@ window.__ModuleLoader__.load({
 		let react_jsx_runtime = require("react/jsx-runtime");
 		let react = require("react");
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
+		let sharedAlerts;
+		try {
+			sharedAlerts = require("dsh-plugin-thread-bus")?.alerts;
+		} catch (error) {
+			sharedAlerts = undefined;
+		}
 		const SELF_ID = "dsh-plugin-subagent-menu";
 		const TAB_KIND = "subagents";
 		const NS = "subagentMenu";
-		const css = ".dshmRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:var(--dsh-content-font-size-secondary,13px);flex-direction:column;flex:auto;line-height:1.5;display:flex}.dshmHeader{box-sizing:border-box;border-bottom:.5px solid var(--dsw-alias-border-l3);flex:none;align-items:center;gap:4px;padding:8px 6px 8px 8px;display:flex}.dshmTool{width:26px;height:26px;color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:none;border-radius:13px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshmTool:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshmChips{align-items:center;gap:6px;flex-wrap:wrap;flex:auto;min-width:0;padding-left:4px;display:flex}.dshmChip{box-sizing:border-box;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-module-platform);border-radius:8px;align-items:center;gap:4px;padding:1px 8px;font-size:11px;line-height:18px;display:inline-flex}.dshmChipAccent{color:var(--dsw-alias-state-business-primary)}.dshmFlag{box-sizing:border-box;color:var(--dsw-alias-label-tertiary);cursor:pointer;background:var(--dsw-alias-bg-module-platform);border:0;border-radius:8px;flex:none;align-items:center;gap:4px;padding:1px 8px;font-size:11px;line-height:18px;display:inline-flex}.dshmFlag:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}.dshmFlag[data-on]{color:var(--dsw-alias-state-business-primary);background:var(--dsw-alias-state-business-tertiary)}.dshmFlagBox{width:12px;height:12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:3px;flex:none;justify-content:center;align-items:center;display:inline-flex}.dshmFlag[data-on] .dshmFlagBox{border-color:var(--dsw-alias-state-business-primary)}.dshmAlert{box-sizing:border-box;color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-interactive-bg-hover-danger);border:.5px solid var(--dsw-alias-state-error-primary);flex-direction:column;gap:4px;margin:8px 10px 0;padding:8px 10px;border-radius:10px;display:flex}.dshmAlertHead{align-items:center;gap:6px;display:flex;font-weight:600;font-size:12px}.dshmAlertToggle{color:inherit;cursor:pointer;background:0 0;border:0;margin-left:auto;font:inherit;text-decoration:underline}.dshmAlertHint{font-size:11px;line-height:16px;opacity:.85}.dshmAlertList{flex-direction:column;gap:2px;margin:2px 0 0;padding-left:16px;font-size:11px;line-height:16px;display:flex}.dshmBody{scrollbar-gutter:stable;flex:auto;min-height:0;margin-right:2px;padding:8px 4px 8px 8px;overflow-y:auto}.dshmLevel{margin:0;padding:0;list-style:none}.dshmItem{margin:0;padding:0}.dshmRow{width:100%;min-width:0;color:inherit;font:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:10px;align-items:flex-start;gap:7px;padding:5px 10px;display:flex;position:relative}.dshmRow:hover{background:var(--dsw-alias-interactive-bg-hover)}.dshmRow:focus-visible{outline:1.5px solid var(--dsw-alias-state-business-primary);outline-offset:-1.5px}.dshmRow[data-current]{background:var(--dsw-alias-interactive-bg-active)}.dshmRow[data-current]:after{content:\"\";border-radius:2px;background:var(--dsw-alias-state-business-primary);position:absolute;left:2px;top:7px;bottom:7px;width:2.5px}.dshmRow[data-current] .dshmLabel{font-weight:550}.dshmRow[data-diagnostic]{cursor:default;color:var(--dsw-alias-label-tertiary)}.dshmText{flex-direction:column;gap:1px;min-width:0;flex:auto;display:flex}.dshmLabelLine{align-items:center;gap:6px;min-width:0;display:flex}.dshmLabel{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.dshmModel{box-sizing:border-box;max-width:170px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-module-platform);border-radius:6px;padding:0 6px;font-size:11px;line-height:16px;white-space:nowrap;text-overflow:ellipsis;flex:none;overflow:hidden}.dshmSecondary{color:var(--dsw-alias-label-caption);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}.dshmMetrics{color:var(--dsw-alias-label-tertiary);white-space:nowrap;flex:none;font-size:12px;line-height:20px;display:flex;gap:8px}.dshmDot{flex:none;width:10px;height:20px;justify-content:center;align-items:center;display:inline-flex}.dshmEmpty{color:var(--dsw-alias-label-secondary);flex-direction:column;gap:4px;align-items:flex-start;padding:4px 12px 14px;display:flex}.dshmEmptyTitle{color:var(--dsw-alias-label-primary);font-weight:500}.dshmNote{color:var(--dsw-alias-label-secondary);margin:2px 10px;padding:8px 2px;font-size:12px}.dshmTitleIcon{color:var(--dsw-alias-label-tertiary);flex:none}.dshmTitleWarn{color:var(--dsw-alias-state-error-primary);flex:none}.dshmTitleCount{color:var(--dsw-alias-label-secondary);flex:none;font-size:11px;line-height:20px}.dshmDense .dshmSecondary{display:none}.dshmDense .dshmRow{padding:3px 10px}";
+		const css = ".dshmRoot{box-sizing:border-box;height:100%;min-height:0;color:var(--dsw-alias-label-primary);font-size:var(--dsh-content-font-size-secondary,13px);flex-direction:column;flex:auto;line-height:1.5;display:flex}.dshmHeader{box-sizing:border-box;border-bottom:.5px solid var(--dsw-alias-border-l3);flex:none;align-items:center;gap:4px;padding:8px 6px 8px 8px;display:flex}.dshmTool{width:26px;height:26px;color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:none;border-radius:13px;flex:none;justify-content:center;align-items:center;padding:0;display:inline-flex}.dshmTool:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}.dshmChips{align-items:center;gap:6px;flex-wrap:wrap;flex:auto;min-width:0;padding-left:4px;display:flex}.dshmChip{box-sizing:border-box;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-module-platform);border-radius:8px;align-items:center;gap:4px;padding:1px 8px;font-size:11px;line-height:18px;display:inline-flex}.dshmChipAccent{color:var(--dsw-alias-state-business-primary)}.dshmFlag{box-sizing:border-box;color:var(--dsw-alias-label-tertiary);cursor:pointer;background:var(--dsw-alias-bg-module-platform);border:0;border-radius:8px;flex:none;align-items:center;gap:4px;padding:1px 8px;font-size:11px;line-height:18px;display:inline-flex}.dshmFlag:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}.dshmFlag[data-on]{color:var(--dsw-alias-state-business-primary);background:var(--dsw-alias-state-business-tertiary)}.dshmFlagBox{width:12px;height:12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:3px;flex:none;justify-content:center;align-items:center;display:inline-flex}.dshmFlag[data-on] .dshmFlagBox{border-color:var(--dsw-alias-state-business-primary)}.dshmAlert{box-sizing:border-box;color:var(--dsw-alias-state-error-primary);background:var(--dsw-alias-interactive-bg-hover-danger);border:.5px solid var(--dsw-alias-state-error-primary);flex-direction:column;gap:4px;margin:8px 10px 0;padding:8px 10px;border-radius:10px;display:flex}.dshmAlertHead{align-items:center;gap:6px;display:flex;font-weight:600;font-size:12px}.dshmAlertToggle{color:inherit;cursor:pointer;background:0 0;border:0;margin-left:auto;font:inherit;text-decoration:underline}.dshmAlertHint{font-size:11px;line-height:16px;opacity:.85}.dshmAlertList{flex-direction:column;gap:2px;margin:2px 0 0;padding-left:16px;font-size:11px;line-height:16px;display:flex}.dshmBody{scrollbar-gutter:stable;flex:auto;min-height:0;margin-right:2px;padding:8px 4px 8px 8px;overflow-y:auto}.dshmLevel{margin:0;padding:0;list-style:none}.dshmItem{margin:0;padding:0}.dshmRow{width:100%;min-width:0;color:inherit;font:inherit;text-align:left;cursor:pointer;background:0 0;border:0;border-radius:10px;align-items:flex-start;gap:7px;padding:5px 10px;display:flex;position:relative}.dshmRow:hover{background:var(--dsw-alias-interactive-bg-hover)}.dshmRow:focus-visible{outline:1.5px solid var(--dsw-alias-state-business-primary);outline-offset:-1.5px}.dshmRow[data-current]{background:var(--dsw-alias-interactive-bg-active)}.dshmRow[data-current]:after{content:\"\";border-radius:2px;background:var(--dsw-alias-state-business-primary);position:absolute;left:2px;top:7px;bottom:7px;width:2.5px}.dshmRow[data-current] .dshmLabel{font-weight:550}.dshmRow[data-diagnostic]{cursor:default;color:var(--dsw-alias-label-tertiary)}.dshmText{flex-direction:column;gap:1px;min-width:0;flex:auto;display:flex}.dshmLabelLine{align-items:center;gap:6px;min-width:0;display:flex}.dshmLabel{white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.dshmModel{box-sizing:border-box;max-width:170px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-module-platform);border-radius:6px;padding:0 6px;font-size:11px;line-height:16px;white-space:nowrap;text-overflow:ellipsis;flex:none;overflow:hidden}.dshmSecondary{color:var(--dsw-alias-label-caption);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}.dshmMetrics{color:var(--dsw-alias-label-tertiary);white-space:nowrap;flex:none;font-size:12px;line-height:20px;display:flex;gap:8px}.dshmDot{flex:none;width:10px;height:20px;justify-content:center;align-items:center;display:inline-flex}.dshmEmpty{color:var(--dsw-alias-label-secondary);flex-direction:column;gap:4px;align-items:flex-start;padding:4px 12px 14px;display:flex}.dshmEmptyTitle{color:var(--dsw-alias-label-primary);font-weight:500}.dshmNote{color:var(--dsw-alias-label-secondary);margin:2px 10px;padding:8px 2px;font-size:12px}.dshmTitleIcon{color:var(--dsw-alias-label-tertiary);flex:none}.dshmTitleWarn{color:var(--dsw-alias-state-error-primary);flex:none}.dshmToasts{box-sizing:border-box;position:fixed;right:16px;bottom:16px;z-index:30;display:flex;flex-direction:column;gap:8px;max-width:min(420px,calc(100vw - 32px));pointer-events:auto}.dshmTitleCount{color:var(--dsw-alias-label-secondary);flex:none;font-size:11px;line-height:20px}.dshmDense .dshmSecondary{display:none}.dshmDense .dshmRow{padding:3px 10px}";
 		const tagId = "dsh-plugin-subagent-menu/Subagents.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -33,6 +39,7 @@ window.__ModuleLoader__.load({
 			alertToggle: "dshmAlertToggle",
 			alertHint: "dshmAlertHint",
 			alertList: "dshmAlertList",
+			toasts: "dshmToasts",
 			titleWarn: "dshmTitleWarn",
 			body: "dshmBody",
 			level: "dshmLevel",
@@ -73,6 +80,16 @@ window.__ModuleLoader__.load({
 			else setTimeout(flush, 0);
 		};
 		const diagnose = (key, level, scope, message, detail) => {
+			sharedAlerts?.push({
+				code: `subagent-menu:${key}`,
+				level,
+				scope,
+				message,
+				expected: "",
+				observed: "",
+				hint: detail === undefined ? "" : String(detail),
+				logs: ["browser console: filter " + DIAG_PREFIX, "host terminal of the running `dsh web`"]
+			});
 			const existing = diagnostics.get(key);
 			if (existing !== undefined) {
 				existing.count += 1;
@@ -98,6 +115,7 @@ window.__ModuleLoader__.load({
 			publishDiagnostics();
 		};
 		const resolveDiagnostic = (key) => {
+			sharedAlerts?.resolve(`subagent-menu:${key}`);
 			if (diagnostics.delete(key)) publishDiagnostics();
 		};
 		const checkContract = (key, level, scope, value, message, detail) => {
@@ -107,6 +125,25 @@ window.__ModuleLoader__.load({
 			}
 			diagnose(key, level, scope, message, detail);
 			return false;
+		};
+		const FallbackToasts = ({ t }) => {
+			const issues = useDiagnostics();
+			if (issues.length === 0) return null;
+			return (0, react_jsx_runtime.jsx)("div", {
+				className: styles.toasts,
+				"data-dshm-toasts": true,
+				children: issues.slice(0, 4).map((issue) => (0, react_jsx_runtime.jsxs)("div", {
+					className: styles.alert,
+					role: issue.level === "error" ? "alert" : "status",
+					children: [(0, react_jsx_runtime.jsxs)("div", {
+						className: styles.alertHead,
+						children: [(0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconWarningOutline16, {}), t("diag.title", { count: issues.length })]
+					}), (0, react_jsx_runtime.jsx)("div", { className: styles.alertHint, children: t("diag.hint") }), (0, react_jsx_runtime.jsxs)("ul", {
+						className: styles.alertList,
+						children: [issue.level === "error" ? "error" : "warn", " · ", issue.scope, " — ", issue.message, issue.count > 1 ? ` (\u00d7${String(issue.count)})` : "", issue.detail === undefined ? "" : ` [${issue.detail}]`]
+					})]
+				}, issue.key))
+			});
 		};
 		function useDiagnostics() {
 			const [, bump] = (0, react.useState)(0);
@@ -557,41 +594,7 @@ window.__ModuleLoader__.load({
 					clearInterval(timer);
 				};
 			}, [tree.counts.running]);
-			const alertNode = issues.length === 0 ? null : (0, react_jsx_runtime.jsxs)("div", {
-				className: styles.alert,
-				role: "alert",
-				"data-dshm-error": true,
-				children: [
-					(0, react_jsx_runtime.jsxs)("div", {
-						className: styles.alertHead,
-						children: [
-							(0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconWarningOutline16, {}),
-							t("diag.title", { count: issues.length }),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: styles.alertToggle,
-								onClick: () => {
-									setShowIssues(!showIssues);
-								},
-								children: t(showIssues ? "diag.hide" : "diag.show")
-							})
-						]
-					}),
-					(0, react_jsx_runtime.jsx)("div", { className: styles.alertHint, children: t("diag.hint") }),
-					showIssues && (0, react_jsx_runtime.jsx)("ul", {
-						className: styles.alertList,
-						children: issues.map((issue) => (0, react_jsx_runtime.jsxs)("li", {
-							children: [
-								(0, react_jsx_runtime.jsxs)("strong", { children: [issue.level === "error" ? "error" : "warn", " · ", issue.scope] }),
-								" — ",
-								issue.message,
-								issue.count > 1 ? ` (×${String(issue.count)})` : "",
-								issue.detail === undefined ? "" : ` [${issue.detail}]`
-							]
-						}, issue.key))
-					})
-				]
-			});
+			const alertNode = null;
 			if (state.phase === "pending") return (0, react_jsx_runtime.jsx)("div", {
 				className: styles.root,
 				"data-dshm-state": "loading",
@@ -721,6 +724,14 @@ window.__ModuleLoader__.load({
 		const openIn = new Set();
 		const inject = ["sessions", "slots", "locale", "sidebarRightTabs", "sidebarRight"];
 		function apply(ctx) {
+			if (sharedAlerts === undefined && typeof ctx.slots?.register === "function" && typeof ctx.slots?.inject === "function") {
+				const registerFallback = () => ctx.slots.register({ name: "shell.overlay", id: "subagent-menu-alerts", order: 110, locale: NS }, FallbackToasts);
+				try {
+					ctx.slots.inject("shell.overlay", registerFallback);
+				} catch (error) {
+					ctx.slots.register({ name: "shell.overlay", id: "subagent-menu-alerts", order: 110, locale: NS }, FallbackToasts);
+				}
+			}
 			const sessions = ctx.sessions;
 			const sidebarRight = ctx.sidebarRight;
 			const t = ctx.locale.bind(NS);

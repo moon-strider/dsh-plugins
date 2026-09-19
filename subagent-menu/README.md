@@ -44,11 +44,11 @@ What is watched: the services it injects (slots, locale, sidebar tab registry, s
 How it reports:
 
 - **Browser console** — one line per distinct issue, prefixed `[dsh-plugin-subagent-menu]`, carrying the level, the scope, what exactly was expected and the hint that dsh internals changed and the plugin needs updating. A repeated failure is logged once; the repeat count lives in the UI.
-- **The tab itself** — a red banner at the top of the Subagents panel screams the issue count and the hint, with a details toggle listing every issue (level, scope, message, the concrete expectation and how many times it failed). The tab title carries a warning marker while anything is wrong.
+- **Toasts over the screen** — every issue is forwarded to the shared alert stack owned by `thread-bus` (`shell.overlay`), so it is visible even when the right sidebar is closed: level, code, message, the concrete expectation, the fix pointer and the log destinations. The tab title still carries a warning marker while anything is wrong; there is no banner inside the panel any more, because a closed sidebar would hide it.
 - **Levels** — `error` means the feature is dead (the tab cannot register, a click cannot navigate, the snapshot shape changed); `warn` means degraded with a fallback (state carrying or prefetch disabled, a warmed session that cannot be released, a session that could not be resolved).
-- An issue clears itself as soon as the contract reads healthy again, so the banner disappears after the plugin is fixed or the environment recovers.
+- An issue clears itself as soon as the contract reads healthy again, so its toast disappears after the plugin is fixed or the environment recovers.
 
-When the banner appears: open the browser console, read the prefixed lines, and update `dsh_plugins/subagent-menu` (or re-apply its patch) against the dsh version that is running.
+When a toast appears: open the browser console, read the prefixed lines, and update `dsh_plugins/subagent-menu` (or re-apply its patch) against the dsh version that is running.
 
 ## Architecture
 
@@ -69,15 +69,3 @@ dsh plugin --profile web add link:"$(pwd)"
 ```
 
 After the first install, reload the GUI page once (new boot-graph rows are picked up only on reload; changes to `lib/client.js` are picked up live).
-
-## Local checks
-
-```sh
-node tmp/smoke.mjs    # registration, definition, face, dictionaries
-node tmp/render.mjs   # tree, ordering, highlight, metrics, navigation
-node tmp/carry.mjs    # shared state inside a tree, no carry between trees
-node tmp/prefetch.mjs # active always, idle only while watched, dropped after
-node tmp/diagnostics.mjs # silent when healthy, loud with scopes when broken
-```
-
-`tmp/` is a scratch verification directory that never reaches git.
