@@ -18,6 +18,31 @@ What moves to the Trash:
 - references to the deleted ids inside `<storagesRoot>/workspace.json` are removed in place.
 
 The session list updates on the next refresh; the tool returns the deleted ids and every path that was trashed.
+## What the panel hides
+
+The Threads panel lists the root threads of the current workspace and hides two kinds of rows:
+
+- **Subagents** — only root threads can be deleted or archived, so subagent sessions never appear.
+- **Drafts** — a session where no prompt was ever sent. dsh marks these in the projection as
+  `sessionListMetadata.blank` with `lastPromptAt: null`; a new chat creates such a session
+  before anything is sent. The panel reads that row from the projection cache
+  (`<storagesRoot>/session_projcache/sessions/<id>.json`) because the live session summary can
+  report `blank: false` before its projections are prepared. A draft stops being a draft, and
+  becomes visible, the moment its first prompt is sent.
+
+## Deleting a live thread
+
+Files are cheap to move; a session that the current process still holds in memory is not. Deleting
+a thread that is live-but-idle trashes its files, but the host's own session list keeps listing it
+until the process restarts, which made the panel row reappear after every refresh. The plugin now
+keeps the ids it trashed for the lifetime of the process and filters them out of its own list, so
+a deleted live thread stays gone from the panel. dsh's own session list may still show it until
+`dsh web` restarts.
+
+Any failure of an archive or delete action is rendered inside the panel, next to the list, in
+addition to the console diagnostic and the shared toast: a click that cannot succeed must never
+look like nothing happened.
+
 
 ## Configuration
 

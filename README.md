@@ -7,7 +7,8 @@ A set of client-side plugins for [DeepSeek Harness (dsh)](https://github.com/dee
 | Plugin | What it does |
 |---|---|
 | [`subagent-menu`](./subagent-menu) | A "Subagents" tab in the right sidebar: the current chat's subagents with their status, stats and click-through into each subagent chat |
-| [`thread-trash`](./thread-trash) | Deletes root threads: moves the thread log, its subagent logs and its records to the system Trash, with an agent tool (and a panel on the way) |
+| [`thread-trash`](./thread-trash) | Deletes root threads: moves the thread log, its subagent logs and its records to the system Trash, with an agent tool and a right-sidebar panel |
+| [`diff-preview`](./diff-preview) | Replaces the chat `edit`/`write` diff card with the first ten diff rows, real `+x -y` counts, an expander and line wrapping, rendered by a pinned `@pierre/diffs` bundle |
 | [`thread-bus`](./thread-bus) | Typed agent-to-agent messaging: cross-thread instructions between root threads, parent instructions to subagents, subagent status reports and questions, each labelled in chat with its origin and what it expects |
 
 ## Installing a plugin into the web profile
@@ -26,3 +27,5 @@ Plugin diagnostics are surfaced as toasts in the frame-wide overlay layer, never
 ## Development
 
 Each plugin's browser half is `lib/client.js`, written in dsh's loader format (`window.__ModuleLoader__.load({id, factory})`, a CJS factory). It is edited directly, with no build step: the web profile's HMR polls the file roughly every 500 ms and hot-reloads the plugin in the browser. Changing the `dsh.client` declaration or the package name requires restarting `dsh web`.
+
+`diff-preview` is the one exception on the host side: it ships a committed `@pierre/diffs` bundle under `lib/vendor`, built by the pinned workspace in `diff-preview/vendor` (see its README). The plugin needs no build step to run; the build script only exists to regenerate that artifact.
