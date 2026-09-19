@@ -98,23 +98,26 @@ const TOOL_DESCRIPTION = {
 		"Send an instruction to one of your own subagents. This is a steer: it reaches the subagent at its nearest step, immediately.\n\n"
 		+ "Use it to correct, redirect or extend work that the subagent is doing now, and to answer a question it asked with ask_parent. "
 		+ "Allowed target: a direct subagent of this thread. Forbidden: a subagent of another thread, or a deeper subagent that is not yours. "
-		+ "Kind: imperative — an instruction to act. For plain status relays to a subagent you manage, this is still the channel; a subagent never commands you. "
+		+ "Kind: imperative — an instruction to act. The subagent answers with report_to_parent while it works, with ask_parent when it is blocked, and with its final result through the standard send_message; a subagent never commands you. "
 		+ "The subagent receives it as a user-role message labelled Instruction. You are the one who manages subagents: they report and ask, you decide.",
 	[TOOL.report]:
-		"Report status, findings or completion to your parent agent. No answer is expected.\n\n"
-		+ "Use it for results, progress and facts your parent needs but does not have to react to. "
+		"Send your parent an INTERMEDIATE status report while you are still working. No answer is expected. This is not the way to hand over your finished result.\n\n"
+		+ "Use it for progress, findings and blockers the parent should know about while the task continues, and for facts the parent does not have to react to. "
 		+ "Allowed target: your direct parent agent only. Forbidden: another thread's parent, a sibling agent, or a cross-thread message — a subagent never initiates cross-thread messaging. "
 		+ "Kind: informative — state facts only, request nothing, and do not phrase it as an instruction to the parent. "
 		+ "If you need a decision, an answer or unblocking, use ask_parent instead; report_to_parent never obliges the parent to reply. "
-		+ "This is the typed channel for status and results: prefer it over the generic send_message, and never send a status update with ask_parent.",
+		+ "The division is by phase, not by preference: while the task is running use report_to_parent for status and ask_parent for questions; when the task is finished send your final result with the standard send_message, exactly as your task instructions require. "
+		+ "Never send a status update with ask_parent (it pauses you and forces an answer), and never deliver your final result with report_to_parent (the parent treats it as work in progress, not as the answer).",
 	[TOOL.ask]:
-		"Ask your parent agent a question that needs an answer. An answer is expected.\n\n"
-		+ "Use it when you are blocked, when a decision is the parent's to make, or when you need information only the parent has. "
+		"Ask your parent a question WHILE THE TASK IS STILL RUNNING. An answer is expected, and asking pauses you until it arrives. This is not the way to hand over your finished result.\n\n"
+		+ "Use it when the current work cannot continue without the parent: you are blocked, a decision is the parent's to make, or only the parent has the information. "
 		+ "Allowed target: your direct parent agent only. Forbidden: another thread's parent, a sibling agent, or a cross-thread message — a subagent never initiates cross-thread messaging. "
 		+ "Kind: inquisitive — one clear question plus the context needed to answer it. "
 		+ "The parent receives it as a user-role message labelled Question and answers with instruct_subagent; the answer arrives later as a separate message and does not block your current step, so state what you will do meanwhile."
 		+ " This call pauses you: after asking, your current turn ends and you stay idle until the parent answers. Do not start other work while waiting, and put everything the parent needs into one question. "
-		+ "Never use it to report status or to hand over a result: a report does not expect an answer and must go through report_to_parent; asking pauses you and makes the parent answer."
+		+ "Never use it to report status: a status update goes through report_to_parent and expects no answer, while asking pauses you and forces the parent to answer. "
+		+ "When the task is finished, the final result goes through the standard send_message, not through ask_parent and not through report_to_parent. "
+		+ "If you only need the parent to know something, that is a report; ask only when you genuinely cannot continue."
 	,
 	[TOOL.create]:
 		"Create a new root thread in this workspace and give it its first instruction.\n\n"
@@ -412,7 +415,7 @@ function frameText(kind, fromId) {
 	const reply = kind === "report" || kind === "question"
 		? `Answer with instruct_subagent({ target: "${fromId}", message: "..." }).`
 		: kind === "instruction"
-			? "Answer with report_to_parent for status or ask_parent for a question (not the generic send_message)."
+			? "While working, use report_to_parent for status and ask_parent for a question; when you finish, send your final result with send_message as your task instructions say."
 			: `Answer with instruct_thread({ target: "${fromId}", message: "..." }) when the other thread needs to know.`;
 	return `${FRAME} kind=${kind} from=${fromId} — ${lead}. This message is not from the human user. ${reply}`;
 }
