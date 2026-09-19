@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { basename, join } from "node:path";
 
 export const name = "thread-trash";
+export { resolveConfig as resolveThreadTrashConfig };
 export const inject = ["tools", "agents"];
 
 const PACKAGE = "dsh-plugin-thread-trash";
@@ -23,8 +24,7 @@ function resolveConfig(raw) {
 	const config = {
 		sessionsRoot: join(home, ".dsh", "sessions"),
 		storagesRoot: join(home, ".dsh", "storages"),
-		trashRoot: join(home, ".Trash"),
-		...DEFAULT_CONFIG
+		trashRoot: join(home, ".Trash")
 	};
 	if (raw === undefined || raw === null) return config;
 	if (typeof raw !== "object" || Array.isArray(raw)) throw new Error("thread-trash config must be an object");
