@@ -22,12 +22,15 @@ this plugin is removed.
 
 ## The card
 
-- **Preview**: the first ten rendered diff rows, at the top, with no click required.
+- **Preview**: the first ten rendered diff rows, at the top, with no click required. The window
+  scrolls, so the whole diff is reachable without expanding anything.
 - **Counts**: `+added −removed` in the card header, using the lines that actually changed.
   The built-in card counts the hunk's context lines too, so a one-line edit reports `+7 −7`;
   here the same edit reports `+1 −1`.
-- **Expand**: `… N more lines` reveals the whole diff, `Collapse` returns to the preview. A
-  diff of ten rows or fewer has no expander.
+- **Toggle**: under the preview — where the built-in card puts its Inspect button — a
+  left-pointing chevron marks the collapsed preview and a down-pointing chevron marks the
+  expanded one; clicking switches between them. The hidden-row count sits next to the chevron.
+  A diff of ten rows or fewer has no toggle, because nothing is hidden.
 - **Wrap**: long lines wrap instead of scrolling sideways, so the ten-row preview always fits
   the chat column.
 - **Surface**: the card keeps the dsh code-block background and radius, and the added and

@@ -37,9 +37,13 @@ window.__ModuleLoader__.load({
 			+ ".dshdpInspect:hover{background:var(--dsw-alias-interactive-bg-hover-solid);color:var(--dsw-alias-label-primary)}"
 			+ ".dshdpCard{border:.5px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-markdown-code-block);border-radius:12px;flex-direction:column;display:flex;margin-top:4px;overflow:hidden}"
 			+ ".dshdpRow[data-state=running] .dshdpCard{border-color:var(--dsw-alias-border-l2)}"
-			+ ".dshdpClip{position:relative;overflow:hidden}"
-			+ ".dshdpClip[data-faded]:after{content:\"\";pointer-events:none;background:linear-gradient(to bottom,transparent,var(--dsw-alias-markdown-code-block));position:absolute;inset:auto 0 0}"
-			+ ".dshdpClip:not([data-faded]):after{display:none}"
+			+ ".dshdpFrame{position:relative;overflow:hidden}"
+			+ ".dshdpFrame[data-faded]:after{content:\"\";pointer-events:none;height:26px;background:linear-gradient(to bottom,transparent,var(--dsw-alias-markdown-code-block));position:absolute;inset:auto 0 0}"
+			+ ".dshdpFrame:not([data-faded]):after{display:none}"
+			+ ".dshdpClip{position:relative}"
+			+ ".dshdpClip[data-scroll]{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin}"
+			+ ".dshdpClip[data-scroll]::-webkit-scrollbar{width:8px}"
+			+ ".dshdpClip[data-scroll]::-webkit-scrollbar-thumb{background:var(--dsw-alias-border-l3);border-radius:4px}"
 			+ ".dshdpStack{flex-direction:column;display:flex}"
 			+ ".dshdpHunk{--dshdp-hunk-padding:0px}"
 			+ ".dshdpGap{background:var(--dsw-alias-border-l3);flex:none;height:1px;margin:0 14px}"
@@ -50,8 +54,9 @@ window.__ModuleLoader__.load({
 			+ ".dshdpLine[data-kind=ctx]{color:var(--dsw-alias-label-tertiary)}"
 			+ ".dshdpSign{user-select:none;width:14px;display:inline-block}"
 			+ ".dshdpFoot{border-top:.5px solid var(--dsw-alias-border-l2);align-items:center;gap:8px;padding:3px 14px 4px;display:flex}"
-			+ ".dshdpExpand{color:var(--dsw-alias-label-tertiary);cursor:pointer;font:inherit;background:0 0;border:none;padding:0;text-align:left}"
-			+ ".dshdpExpand:hover{color:var(--dsw-alias-label-secondary)}"
+			+ ".dshdpExpand{color:var(--dsw-alias-label-tertiary);cursor:pointer;font:inherit;background:0 0;border:none;border-radius:6px;align-items:center;gap:5px;margin:0;padding:1px 5px;display:inline-flex}"
+			+ ".dshdpExpand:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}"
+			+ ".dshdpExpandGlyph{flex:none;display:inline-flex}"
 			+ ".dshdpOutput{border-top:.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);white-space:pre-wrap;overflow-wrap:anywhere;max-height:140px;margin:0;padding:8px 14px;font:var(--dsw-font-markdown-code-block);overflow-y:auto}"
 			+ ".dshdpOutput[data-error]{color:var(--dsw-alias-state-error-primary)}"
 			+ ".dshdpNote{color:var(--dsw-alias-label-tertiary);padding:6px 14px;font:var(--dsw-font-markdown-code-block)}";
@@ -77,7 +82,9 @@ window.__ModuleLoader__.load({
 			state: "dshdpState",
 			inspect: "dshdpInspect",
 			card: "dshdpCard",
+			frame: "dshdpFrame",
 			clip: "dshdpClip",
+			expandGlyph: "dshdpExpandGlyph",
 			stack: "dshdpStack",
 			hunk: "dshdpHunk",
 			gap: "dshdpGap",
@@ -182,6 +189,21 @@ window.__ModuleLoader__.load({
 				d: "M11.5 1.9a1.6 1.6 0 0 1 2.3 0l.3.3a1.6 1.6 0 0 1 0 2.3l-7.2 7.2-3 .7.7-3 6.9-7.5Z",
 				stroke: "currentColor",
 				strokeWidth: 1.3,
+				strokeLinejoin: "round"
+			})
+		});
+
+		const ChevronGlyph = ({ open }) => react_jsx_runtime.jsx("svg", {
+			width: 12,
+			height: 12,
+			viewBox: "0 0 16 16",
+			fill: "none",
+			"aria-hidden": "true",
+			children: react_jsx_runtime.jsx("path", {
+				d: open ? "M3.5 6 8 10.5 12.5 6" : "M10 3.5 5.5 8 10 12.5",
+				stroke: "currentColor",
+				strokeWidth: 1.6,
+				strokeLinecap: "round",
 				strokeLinejoin: "round"
 			})
 		});
@@ -565,6 +587,7 @@ window.__ModuleLoader__.load({
 			const [expanded, setExpanded] = react.useState(false);
 			const [clipHeight, setClipHeight] = react.useState(PREVIEW_ROWS * FALLBACK_ROW_HEIGHT);
 			const [measuredRows, setMeasuredRows] = react.useState(0);
+			const [atBottom, setAtBottom] = react.useState(false);
 			const clipRef = react.useRef(null);
 			const cardRef = react.useRef(null);
 			const cappedRef = react.useRef(false);
@@ -576,11 +599,17 @@ window.__ModuleLoader__.load({
 				if (rows.length === 0) return;
 				setMeasuredRows((current) => (current === rows.length ? current : rows.length));
 				if (rows.length <= PREVIEW_ROWS) return;
-				const height = rows[PREVIEW_ROWS - 1].getBoundingClientRect().bottom - clip.getBoundingClientRect().top;
+				const height = rows[PREVIEW_ROWS - 1].getBoundingClientRect().bottom - clip.getBoundingClientRect().top + clip.scrollTop;
 				if (height > 0) setClipHeight((current) => (Math.abs(current - height) < 0.5 ? current : height));
+			}, []);
+			const onScroll = react.useCallback((event) => {
+				const node = event.currentTarget;
+				const bottom = node.scrollHeight - node.scrollTop - node.clientHeight <= 2;
+				setAtBottom((current) => (current === bottom ? current : bottom));
 			}, []);
 			const total = measuredRows > 0 ? measuredRows : model.total;
 			const hidden = Math.max(0, total - PREVIEW_ROWS);
+			const scrolled = hidden > 0 && !expanded;
 			const huge = total > HUGE_ROWS;
 			const pierreActive = bundle !== null && bundle !== undefined && model.hunks.length > 0 && !(huge && !expanded);
 			cappedRef.current = model.hunks.length > 0 && !pierreActive && model.total > HUGE_ROWS;
@@ -619,11 +648,15 @@ window.__ModuleLoader__.load({
 					? h(PierreHunks, { mod: bundle, hunks: model.hunks, dark, measure })
 					: h(NativeHunks, { hunks: model.hunks, limit: cappedRef.current ? PREVIEW_ROWS : model.total });
 				body = h("div", {
+					className: STYLE.frame,
+					"data-faded": scrolled && !atBottom ? "true" : undefined
+				}, h("div", {
 					className: STYLE.clip,
 					ref: clipRef,
-					"data-faded": hidden > 0 && !expanded ? "true" : undefined,
-					style: { maxHeight: hidden > 0 && !expanded ? `${clipHeight}px` : "none" }
-				}, content);
+					"data-scroll": scrolled ? "true" : undefined,
+					onScroll,
+					style: { maxHeight: scrolled ? `${clipHeight}px` : "none" }
+				}, content));
 			}
 
 			react.useEffect(() => {
@@ -645,8 +678,14 @@ window.__ModuleLoader__.load({
 						className: STYLE.expand,
 						"aria-expanded": expanded ? "true" : "false",
 						"aria-label": expanded ? t("collapseAria") : t("expandAria", { count: hidden }),
-						onClick: () => setExpanded((value) => !value)
-					}, expanded ? t("collapse") : t("expand", { count: hidden })),
+						"data-open": expanded ? "true" : "false",
+						onClick: () => {
+							setAtBottom(false);
+							setExpanded((value) => !value);
+						}
+					},
+					h("span", { className: STYLE.expandGlyph }, h(ChevronGlyph, { open: expanded })),
+					expanded ? t("collapse") : t("expand", { count: hidden })),
 					pierreActive || bundle !== null ? null : h("span", { className: STYLE.state }, t("partial", { count: PREVIEW_ROWS }))
 				)
 				: null;
