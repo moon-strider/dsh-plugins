@@ -1,17 +1,29 @@
 {
 	"name": "dsh-plugin-thread-trash",
-	"description": "Delete root threads of the dsh web GUI: an agent tool that moves a thread's log, its subagent logs and its records to the system Trash",
+	"description": "Delete root threads of the dsh web GUI: an agent tool plus a right-sidebar panel that move a thread's log, its subagent logs and its records to the system Trash",
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
 	"main": "lib/index.js",
 	"exports": {
 		".": "./lib/index.js",
-		"./package.json": "./package.json"
+		"./package.json": "./package.json",
+		"./client": "./lib/client.js"
 	},
 	"dsh": {
 		"bundle": {
 			"patch": "./cordis.patch.yml"
+		},
+		"client": {
+			"platform": "web",
+			"inject": [
+				"@deepseek-ai/dsh-client-locale",
+				"@deepseek-ai/dsh-client-ui-layout",
+				"@deepseek-ai/dsh-client-ui-renderer",
+				"@deepseek-ai/dsh-client-ui-session",
+				"@deepseek-ai/dsh-client-ui-sidebar-right",
+				"dsh-plugin-thread-bus"
+			]
 		}
 	},
 	"license": "MIT"
