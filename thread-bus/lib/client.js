@@ -287,6 +287,16 @@ window.__ModuleLoader__.load({
 			return found?.title ?? found?.displayTitle ?? undefined;
 		};
 
+		const shortId = (sessionId) => (typeof sessionId === "string" && sessionId.length > 10 ? `${sessionId.slice(0, 8)}…` : sessionId);
+
+		const senderHandle = (sessionId) => {
+			const list = renderHost?.sessions?.list?.getSnapshot?.();
+			const found = list?.byId?.[sessionId] ?? list?.items?.find((item) => item.sessionId === sessionId);
+			if (found?.origin === "subagent" || (found?.parentSessionId !== undefined && found?.origin !== undefined)) return `your subagent ${shortId(sessionId)}`;
+			const title = titleOf(sessionId);
+			return title === undefined ? shortId(sessionId) : title;
+		};
+
 		const useThreadTitle = (sessionId) => react.useSyncExternalStore(
 			(listener) => renderHost.sessions.list.subscribe(listener),
 			() => titleOf(sessionId) ?? sessionId
@@ -295,10 +305,10 @@ window.__ModuleLoader__.load({
 		const IncomingCard = ({ node }) => {
 			const { parsed, content } = node.data;
 			useRenderedRow(node.data.id);
-			const title = useThreadTitle(parsed.fromSessionId);
+			const sender = senderHandle(parsed.fromSessionId);
 			const blocks = content.filter((block, index) => !(index === 0 && block.type === "text" && parseFrame(block.text) !== undefined));
 			return h("div", { className: "dshtbIncoming", "data-thread-bus": "in", "data-kind": parsed.kind },
-				h("div", { className: STYLE.pill, title: parsed.fromSessionId }, `${labels[parsed.kind] ?? parsed.kind} — ${title}`),
+				h("div", { className: STYLE.pill, title: parsed.fromSessionId }, `${labels[parsed.kind] ?? parsed.kind} — ${sender}`),
 				...blocks.map((block, index) => h("div", { className: "dshtbMessage", key: index, style: { background: tintOf(parsed.kind) } }, block.type === "text" ? block.text : JSON.stringify(block)))
 			);
 		};
