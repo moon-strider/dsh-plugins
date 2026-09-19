@@ -187,7 +187,7 @@ async function cleanWorkspaceRegistry(config, ids, journal) {
 	}
 }
 
-async function deleteThread(ctx, journal, services, config, caller, target) {
+async function deleteThread(ctx, journal, services, config, caller, target, hidden) {
 	const sessions = services.sessions;
 	const header = sessions?.get?.(target)?.header ?? (await observedHeader(services, target));
 	if (header === undefined) throw new Error(`thread "${target}" could not be found`);
@@ -215,6 +215,7 @@ async function deleteThread(ctx, journal, services, config, caller, target) {
 		if (movedCache !== undefined) trashed.push(movedCache);
 	}
 	await cleanWorkspaceRegistry(config, ids, journal);
+	for (const id of ids) hidden?.ids.add(id);
 	if (trashed.length === 0) {
 		journal.put(`DELETE-empty-${target}`, "warn", "no files were found for this thread", {
 			expected: "session directories under the configured sessions root",
@@ -290,7 +291,7 @@ function defineTool(spec) {
 	};
 }
 
-function registerTool(ctx, journal, services, config) {
+function registerTool(ctx, journal, services, config, hidden) {
 	const definition = defineTool({
 		name: TOOL,
 		description: toolDescription(),
@@ -316,7 +317,7 @@ function registerTool(ctx, journal, services, config) {
 			const role = roleOfAgent(ctx, caller);
 			if (role.kind !== "root") throw new Error("only a root thread can delete another root thread");
 			if (args.target === caller.id) throw new Error("delete_thread deletes another thread; a thread cannot delete itself");
-			const result = await deleteThread(ctx, journal, services, config, caller, args.target);
+			const result = await deleteThread(ctx, journal, services, config, caller, args.target, hidden);
 			return { deleted: result.ids, trashed: result.trashed };
 		}
 	});
@@ -413,7 +414,7 @@ async function draftSessionIds(services, config, listed) {
 	return drafts;
 }
 
-async function rootThreads(ctx, services, config) {
+async function rootThreads(ctx, services, hidden, config) {
 	const published = [];
 	const listed = typeof services.sessionQuery?.listSessions === "function"
 		? (await services.sessionQuery.listSessions(new AbortController().signal)).map((record) => ({ id: record.header.id, header: record.header }))
@@ -421,6 +422,7 @@ async function rootThreads(ctx, services, config) {
 	const archivedIds = archivedSessionIds(ctx);
 	const draftIds = await draftSessionIds(services, config, listed.map((entry) => entry.id));
 	for (const entry of listed) {
+		if (hidden?.ids.has(entry.id)) continue;
 		const live = ctx.agents?.get?.(entry.id);
 		published.push({
 			sessionId: entry.id,
@@ -443,7 +445,7 @@ async function rootThreads(ctx, services, config) {
 	return published;
 }
 
-function registerRoutes(connectionCtx, ctx, journal, services, config) {
+function registerRoutes(connectionCtx, ctx, journal, services, config, hidden) {
 	const connection = connectionCtx.connection;
 	if (connection?.fetch?.register === undefined) {
 		journal.put("SVC-connection", "error", "the panel channel is unavailable", {
@@ -467,7 +469,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				const denied = guard(request);
 				if (denied !== undefined) return denied;
 				try {
-				const items = await rootThreads(ctx, services, config);
+				const items = await rootThreads(ctx, services, hidden, config);
 				const threads = items
 					.filter((item) => item.origin !== "subagent" && item.blank !== true)
 					.map((item) => {
@@ -535,7 +537,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 				if (header.origin === "subagent") return Response.json({ ok: false, error: "only root threads can be deleted" }, { status: 400 });
 				if (ctx.agents?.get?.(target)?.status === "running") return Response.json({ ok: false, error: `thread "${target}" is running; stop it first` }, { status: 409 });
 				try {
-					const result = await deleteThread(ctx, journal, services, config, { session: { header } }, target);
+					const result = await deleteThread(ctx, journal, services, config, { session: { header } }, target, hidden);
 					return Response.json({ ok: true, deleted: result.ids, trashed: result.trashed });
 				} catch (error) {
 					return Response.json({ ok: false, error: String(error?.message ?? error) }, { status: 500 });
@@ -554,6 +556,7 @@ function registerRoutes(connectionCtx, ctx, journal, services, config) {
 export function apply(ctx, rawConfig) {
 	const journal = createJournal(ctx);
 	const config = resolveConfig(rawConfig);
+	const hidden = { ids: new Set() };
 	const services = { sessions: ctx.get("sessions"), sessionController: undefined, sessionQuery: undefined };
 	journal.put("SVC-sessionController", "warn", "waiting for the session controller", {
 		expected: "the session controller service is mounted",
@@ -567,8 +570,8 @@ export function apply(ctx, rawConfig) {
 	ctx.inject(["sessionQuery"], (queryCtx) => {
 		services.sessionQuery = queryCtx.sessionQuery;
 	});
-	registerTool(ctx, journal, services, config);
+	registerTool(ctx, journal, services, config, hidden);
 	applyRoleScope(ctx, journal);
-	ctx.inject(["connection"], (connectionCtx) => registerRoutes(connectionCtx, ctx, journal, services, config));
+	ctx.inject(["connection"], (connectionCtx) => registerRoutes(connectionCtx, ctx, journal, services, config, hidden));
 	ctx.logger?.info?.(`[${PACKAGE}] thread deletion ready: ${TOOL}`);
 }
