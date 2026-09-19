@@ -76,6 +76,8 @@ window.__ModuleLoader__.load({
 			"stopFirst": "Stop it first",
 			"closeFirst": "Stop it and close it first",
 			"deleted": "Moved to the Trash",
+			"deleteFailed": "Not deleted",
+			"archiveFailed": "Archive not changed",
 			"note": "Deleting moves the thread log to the system Trash; it stays recoverable."
 		};
 		const ru = {
@@ -97,6 +99,8 @@ window.__ModuleLoader__.load({
 			"stopFirst": "Сначала остановите",
 			"closeFirst": "Сначала остановите и закройте",
 			"deleted": "Перемещено в корзину",
+			"deleteFailed": "Не удалось удалить",
+			"archiveFailed": "Не удалось изменить архив",
 			"note": "Удаление переносит лог треда в системную корзину; его можно восстановить."
 		};
 		const zh = {
@@ -118,6 +122,8 @@ window.__ModuleLoader__.load({
 			"stopFirst": "请先停止",
 			"closeFirst": "请先停止并关闭",
 			"deleted": "已移到废纸篓",
+			"deleteFailed": "删除失败",
+			"archiveFailed": "归档状态未更改",
 			"note": "删除会将线程日志移到系统废纸篓，仍可恢复。"
 		};
 
@@ -199,6 +205,7 @@ window.__ModuleLoader__.load({
 			const [state, setState] = react.useState({ phase: "loading", threads: [], error: undefined });
 			const [busy, setBusy] = react.useState(false);
 			const [revision, setRevision] = react.useState(0);
+			const [actionError, setActionError] = react.useState(undefined);
 
 			react.useEffect(() => {
 				let cancelled = false;
@@ -241,6 +248,7 @@ window.__ModuleLoader__.load({
 
 			const toggleArchive = async (thread) => {
 				setBusy(true);
+				setActionError(undefined);
 				try {
 					const response = await fetch(ARCHIVE_URL, {
 						method: "POST",
@@ -252,6 +260,7 @@ window.__ModuleLoader__.load({
 					if (!response.ok || payload?.ok !== true) throw new Error(payload?.error ?? `HTTP ${response.status}`);
 					resolveDiagnostic("PANEL-ARCHIVE");
 				} catch (error) {
+					setActionError(`${t("archiveFailed")}: ${String(error?.message ?? error)}`);
 					diagnose("PANEL-ARCHIVE", "error", "panel", "the archive state could not be changed", {
 						expected: `POST ${ARCHIVE_URL} toggles the archived flag`,
 						observed: String(error?.message ?? error),
@@ -265,6 +274,7 @@ window.__ModuleLoader__.load({
 
 			const remove = async (target) => {
 				setBusy(true);
+				setActionError(undefined);
 				try {
 					const response = await fetch(DELETE_URL, {
 						method: "POST",
@@ -282,6 +292,7 @@ window.__ModuleLoader__.load({
 						await sessions?.refresh?.();
 					} catch (error) {}
 				} catch (error) {
+					setActionError(`${t("deleteFailed")}: ${String(error?.message ?? error)}`);
 					diagnose("PANEL-DELETE", "error", "panel", "the thread could not be deleted", {
 						expected: `POST ${DELETE_URL} moves the thread to the Trash`,
 						observed: String(error?.message ?? error),
@@ -301,6 +312,7 @@ window.__ModuleLoader__.load({
 				h("div", { className: STYLE.body, "data-thread-trash": "body" },
 					state.phase === "loading" ? h("p", { className: STYLE.note }, t("loading")) : null,
 					state.error === undefined ? null : h("p", { className: STYLE.note }, `${t("failed")}: ${state.error}`),
+					actionError === undefined ? null : h("p", { className: STYLE.note, "data-action-error": "true" }, actionError),
 					state.phase === "ready" && state.threads.length === 0 ? h("p", { className: STYLE.note }, t("empty")) : null,
 					...state.threads.map((thread) => h("div", { className: STYLE.row, key: thread.sessionId, "data-thread": thread.sessionId, "data-running": thread.running ? "true" : undefined, "data-archived": thread.archived === true ? "true" : undefined },
 						h("div", { className: STYLE.main },
