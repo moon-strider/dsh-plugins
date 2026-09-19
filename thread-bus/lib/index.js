@@ -105,14 +105,16 @@ const TOOL_DESCRIPTION = {
 		+ "Use it for results, progress and facts your parent needs but does not have to react to. "
 		+ "Allowed target: your direct parent agent only. Forbidden: another thread's parent, a sibling agent, or a cross-thread message — a subagent never initiates cross-thread messaging. "
 		+ "Kind: informative — state facts only, request nothing, and do not phrase it as an instruction to the parent. "
-		+ "If you need a decision, an answer or unblocking, use ask_parent instead; report_to_parent never obliges the parent to reply.",
+		+ "If you need a decision, an answer or unblocking, use ask_parent instead; report_to_parent never obliges the parent to reply. "
+		+ "This is the typed channel for status and results: prefer it over the generic send_message, and never send a status update with ask_parent.",
 	[TOOL.ask]:
 		"Ask your parent agent a question that needs an answer. An answer is expected.\n\n"
 		+ "Use it when you are blocked, when a decision is the parent's to make, or when you need information only the parent has. "
 		+ "Allowed target: your direct parent agent only. Forbidden: another thread's parent, a sibling agent, or a cross-thread message — a subagent never initiates cross-thread messaging. "
 		+ "Kind: inquisitive — one clear question plus the context needed to answer it. "
 		+ "The parent receives it as a user-role message labelled Question and answers with instruct_subagent; the answer arrives later as a separate message and does not block your current step, so state what you will do meanwhile."
-		+ " This call pauses you: after asking, your current turn ends and you stay idle until the parent answers. Do not start other work while waiting, and put everything the parent needs into one question."
+		+ " This call pauses you: after asking, your current turn ends and you stay idle until the parent answers. Do not start other work while waiting, and put everything the parent needs into one question. "
+		+ "Never use it to report status or to hand over a result: a report does not expect an answer and must go through report_to_parent; asking pauses you and makes the parent answer."
 	,
 	[TOOL.create]:
 		"Create a new root thread in this workspace and give it its first instruction.\n\n"
@@ -410,7 +412,7 @@ function frameText(kind, fromId) {
 	const reply = kind === "report" || kind === "question"
 		? `Answer with instruct_subagent({ target: "${fromId}", message: "..." }).`
 		: kind === "instruction"
-			? "Report or ask with report_to_parent or ask_parent."
+			? "Answer with report_to_parent for status or ask_parent for a question (not the generic send_message)."
 			: `Answer with instruct_thread({ target: "${fromId}", message: "..." }) when the other thread needs to know.`;
 	return `${FRAME} kind=${kind} from=${fromId} — ${lead}. This message is not from the human user. ${reply}`;
 }
