@@ -7,6 +7,7 @@ A set of client-side plugins for [DeepSeek Harness (dsh)](https://github.com/dee
 | Plugin | What it does |
 |---|---|
 | [`subagent-menu`](./subagent-menu) | A "Subagents" tab in the right sidebar: the current chat's subagents with their status, stats and click-through into each subagent chat |
+| [`thread-bus`](./thread-bus) | Typed agent-to-agent messaging: cross-thread instructions between root threads, parent instructions to subagents, subagent status reports and questions, each labelled in chat with its origin and what it expects |
 
 ## Installing a plugin into the web profile
 
@@ -16,6 +17,10 @@ dsh plugin --profile web add link:"$(pwd)"
 ```
 
 The package declares `dsh.bundle.patch`, so it adds itself to the profile's layer list; its patch file inserts the Loader row, and the `dsh.client` declaration turns the package into a browser plugin. After the first install, reload the GUI page once (new boot-graph rows are picked up only on reload; changes to an already installed plugin are picked up live through HMR).
+
+## Alerts
+
+Plugin diagnostics are surfaced as toasts in the frame-wide overlay layer, never inside a sidebar panel: a closed sidebar must not hide a broken contract. `thread-bus` owns the stack; other plugins in this repository forward their own diagnostics into it and fall back to a local stack if it is absent.
 
 ## Development
 
